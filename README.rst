@@ -43,6 +43,7 @@ identical to `TestAgent`, but uses `r.DefaultAgent` as user agent for each query
 Query parsed robots data with explicit user agent.
 
 ::
+
     allow, err := robots.TestAgent("/", "FooBot")
     if err != nil {
         // robots.txt check error
@@ -52,6 +53,7 @@ Query parsed robots data with explicit user agent.
 Or with implicit user agent.
 
 ::
+
     robots.DefaultAgent = "OtherBot"
     allow, err := robots.TestAgent("/")
     if err != nil {
