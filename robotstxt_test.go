@@ -63,6 +63,13 @@ func TestFromStringBasic(t *testing.T) {
     }
 }
 
+func TestFromStringEmpty(t *testing.T) {
+    r, _ := FromString("")
+    if allow, err := r.TestAgent("/", "Somebot"); err != nil || !allow {
+        t.Fatal("FromString(\"\") MUST allow everything.")
+    }
+}
+
 func TestFromStringComment(t *testing.T) {
     if _, err := FromString("# comment"); err != nil {
         t.Fatal("FromString MUST accept \"# comment\"")
@@ -94,13 +101,5 @@ func TestFromString002(t *testing.T) {
     }
     if !allow {
         t.Fatal("Must allow.")
-    }
-}
-
-
-func TestEmpty(t *testing.T) {
-    r, _ := FromString("")
-    if allow, err := r.TestAgent("/", "Somebot"); err != nil || !allow {
-        t.Fatal("FromString(\"\") MUST allow everything.")
     }
 }
