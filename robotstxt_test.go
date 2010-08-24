@@ -63,6 +63,40 @@ func TestFromStringBasic(t *testing.T) {
     }
 }
 
+func TestFromStringComment(t *testing.T) {
+    if _, err := FromString("# comment"); err != nil {
+        t.Fatal("FromString MUST accept \"# comment\"")
+    }
+}
+
+func TestFromString001(t *testing.T) {
+    r, err := FromString("User-Agent: *\r\nDisallow: /\r\n")
+    if err != nil {
+        t.Fatal(err.String())
+    }
+    allow, err1 := r.TestAgent("/foobar", "SomeAgent")
+    if err1 != nil {
+        t.Fatal(err1.String())
+    }
+    if allow {
+        t.Fatal("Must deny.")
+    }
+}
+
+func TestFromString002(t *testing.T) {
+    r, err := FromString("User-Agent: *\r\nDisallow: /account\r\n")
+    if err != nil {
+        t.Fatal(err.String())
+    }
+    allow, err1 := r.TestAgent("/foobar", "SomeAgent")
+    if err1 != nil {
+        t.Fatal(err1.String())
+    }
+    if !allow {
+        t.Fatal("Must allow.")
+    }
+}
+
 
 func TestEmpty(t *testing.T) {
     r, _ := FromString("")
@@ -70,4 +104,3 @@ func TestEmpty(t *testing.T) {
         t.Fatal("FromString(\"\") MUST allow everything.")
     }
 }
-

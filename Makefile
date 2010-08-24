@@ -8,10 +8,11 @@ TARG=robotstxt
 GOFMT=gofmt -spaces=true -tabindent=false -tabwidth=4
 
 GOFILES=\
+	parser.go\
+	scanner.go\
 	robotstxt.go\
 
 include $(GOROOT)/src/Make.pkg
 
 format:
 	${GOFMT} -w $(GOFILES)
-
