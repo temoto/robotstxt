@@ -63,3 +63,20 @@ func TestScan006(t *testing.T) {
         t.Fatal("Wrong tokens read:", strconv.Quote(tokens[0]), strconv.Quote(tokens[1]), strconv.Quote(tokens[2]), strconv.Quote(tokens[3]))
     }
 }
+
+func TestScan007(t *testing.T) {
+    sc := NewByteScanner("test-007", false)
+    s := "# comment \r\n# more comments\n\nDisallow:\r"
+    sc.Feed( []byte(s) , true)
+    tokens, err := sc.ScanAll()
+    if err != nil {
+        t.Fatal(err.String())
+    }
+    //println("--- len(tokens):", len(tokens))
+    if len(tokens) != 4 {
+        t.Fatal("Expecting exactly 4 tokens.")
+    }
+    if tokens[0] != "\n" || tokens[1] != "\n" || tokens[2] != "Disallow" || tokens[3] != "\n" {
+        t.Fatal("Wrong tokens read:", strconv.Quote(tokens[0]), strconv.Quote(tokens[1]), strconv.Quote(tokens[2]), strconv.Quote(tokens[3]))
+    }
+}

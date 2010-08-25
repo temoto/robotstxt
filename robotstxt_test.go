@@ -103,3 +103,33 @@ func TestFromString002(t *testing.T) {
         t.Fatal("Must allow.")
     }
 }
+
+const robots_text_001 = "User-agent: * \nDisallow: /administrator/\nDisallow: /cache/\nDisallow: /components/\nDisallow: /editor/\nDisallow: /forum/\nDisallow: /help/\nDisallow: /images/\nDisallow: /includes/\nDisallow: /language/\nDisallow: /mambots/\nDisallow: /media/\nDisallow: /modules/\nDisallow: /templates/\nDisallow: /installation/\nDisallow: /getcid/\nDisallow: /tooltip/\nDisallow: /getuser/\nDisallow: /download/\nDisallow: /index.php?option=com_phorum*,quote=1\nDisallow: /index.php?option=com_phorum*phorum_query=search\nDisallow: /index.php?option=com_phorum*,newer\nDisallow: /index.php?option=com_phorum*,older\n\nUser-agent: Yandex\nAllow: /\nSitemap: http://www.pravorulya.com/sitemap.xml\nSitemap: http://www.pravorulya.com/sitemap1.xml"
+
+func TestFromString003(t *testing.T) {
+    r, err := FromString(robots_text_001)
+    if err != nil {
+        t.Fatal(err.String())
+    }
+    allow, err1 := r.TestAgent("/administrator/", "SomeBot")
+    if err1 != nil {
+        t.Fatal(err1.String())
+    }
+    if allow {
+        t.Fatal("Must deny.")
+    }
+}
+
+func TestFromString004(t *testing.T) {
+    r, err := FromString(robots_text_001)
+    if err != nil {
+        t.Fatal(err.String())
+    }
+    allow, err1 := r.TestAgent("/paruram", "SomeBot")
+    if err1 != nil {
+        t.Fatal(err1.String())
+    }
+    if !allow {
+        t.Fatal("Must allow.")
+    }
+}
