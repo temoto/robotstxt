@@ -27,20 +27,20 @@ var AllowAll = &RobotsData{allowAll: true}
 var DisallowAll = &RobotsData{disallowAll: true}
 
 
-func FromResponse(statusCode int, body string) (*RobotsData, os.Error) {
+func FromResponse(statusCode int, body string, print_errors bool) (*RobotsData, os.Error) {
     switch {
     case statusCode == 404:
         return AllowAll, nil
     case statusCode == 401 || statusCode == 403:
         return DisallowAll, nil
     case statusCode >= 200 && statusCode < 300:
-        return FromString(body)
+        return FromString(body, print_errors)
     }
     // Conservative disallow all default
     return DisallowAll, nil
 }
 
-func FromString(body string) (r *RobotsData, err os.Error) {
+func FromString(body string, print_errors bool) (r *RobotsData, err os.Error) {
     // special case (probably not worth optimization?)
     trimmed := strings.TrimSpace(body)
     if trimmed == "" {
@@ -48,6 +48,7 @@ func FromString(body string) (r *RobotsData, err os.Error) {
     }
 
     sc := NewByteScanner("string", false)
+    sc.Quiet = !print_errors
     sc.Feed([]byte(body), true)
     var tokens []string
     tokens, err = sc.ScanAll()
