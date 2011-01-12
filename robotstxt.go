@@ -4,6 +4,7 @@
 package robotstxt
 
 import (
+    "bytes"
     "os"
     "strings"
 )
@@ -27,29 +28,33 @@ var AllowAll = &RobotsData{allowAll: true}
 var DisallowAll = &RobotsData{disallowAll: true}
 
 
-func FromResponse(statusCode int, body string, print_errors bool) (*RobotsData, os.Error) {
+func FromResponseBytes(statusCode int, body []byte, print_errors bool) (*RobotsData, os.Error) {
     switch {
     case statusCode == 404:
         return AllowAll, nil
     case statusCode == 401 || statusCode == 403:
         return DisallowAll, nil
     case statusCode >= 200 && statusCode < 300:
-        return FromString(body, print_errors)
+        return FromBytes(body, print_errors)
     }
     // Conservative disallow all default
     return DisallowAll, nil
 }
 
-func FromString(body string, print_errors bool) (r *RobotsData, err os.Error) {
+func FromResponse(statusCode int, body string, print_errors bool) (*RobotsData, os.Error) {
+    return FromResponseBytes(statusCode, []byte(body), print_errors)
+}
+
+func FromBytes(body []byte, print_errors bool) (r *RobotsData, err os.Error) {
     // special case (probably not worth optimization?)
-    trimmed := strings.TrimSpace(body)
-    if trimmed == "" {
+    trimmed := bytes.TrimSpace(body)
+    if len(trimmed) == 0 {
         return AllowAll, nil
     }
 
-    sc := NewByteScanner("string", false)
+    sc := NewByteScanner("bytes", false)
     sc.Quiet = !print_errors
-    sc.Feed([]byte(body), true)
+    sc.Feed(body, true)
     var tokens []string
     tokens, err = sc.ScanAll()
     if err != nil {
@@ -66,6 +71,10 @@ func FromString(body string, print_errors bool) (r *RobotsData, err os.Error) {
     r.rules, err = parser.ParseAll()
 
     return r, err
+}
+
+func FromString(body string, print_errors bool) (r *RobotsData, err os.Error) {
+    return FromBytes([]byte(body), print_errors)
 }
 
 func (r *RobotsData) Test(url string) (bool, os.Error) {
