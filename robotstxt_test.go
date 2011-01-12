@@ -133,3 +133,58 @@ func TestFromString004(t *testing.T) {
         t.Fatal("Must allow.")
     }
 }
+
+func TestInvalidEncoding(t *testing.T) {
+    // Invalid UTF-8 encoding should not break parser.
+    _, err := FromString("User-agent: H\xef\xbf\xbdm�h�kki\nDisallow: *", true)
+    if err != nil {
+        t.Fatal(err.String())
+    }
+}
+
+// http://www.google.com/robots.txt on Wed, 12 Jan 2011 12:22:20 GMT
+const robots_text_002 = ("User-agent: *\nDisallow: /search\nDisallow: /groups\nDisallow: /images\nDisallow: /catalogs\nDisallow: /catalogues\nDisallow: /news\nAllow: /news/directory\nDisallow: /nwshp\nDisallow: /setnewsprefs?\nDisallow: /index.html?\nDisallow: /?\nDisallow: /addurl/image?\nDisallow: /pagead/\nDisallow: /relpage/\nDisallow: /relcontent\nDisallow: /imgres\nDisallow: /imglanding\nDisallow: /keyword/\nDisallow: /u/\nDisallow: /univ/\nDisallow: /cobrand\nDisallow: /custom\nDisallow: /advanced_group_search\nDisallow: /googlesite\nDisallow: /preferences\nDisallow: /setprefs\nDisallow: /swr\nDisallow: /url\nDisallow: /default\nDisallow: /m?\nDisallow: /m/?\nDisallow: /m/blogs?\nDisallow: /m/directions?\nDisallow: /m/ig\nDisallow: /m/images?\nDisallow: /m/local?\nDisallow: /m/movies?\nDisallow: /m/news?\nDisallow: /m/news/i?\nDisallow: /m/place?\nDisallow: /m/products?\nDisallow: /m/products/\nDisallow: /m/setnewsprefs?\nDisallow: /m/search?\nDisallow: /m/swmloptin?\nDisallow: /m/trends\nDisallow: /m/video?\nDisallow: /wml?\nDisallow: /wml/?\nDisallow: /wml/search?\nDisallow: /xhtml?\nDisallow: /xhtml/?\nDisallow: /xhtml/search?\nDisallow: /xml?\nDisallow: /imode?\nDisallow: /imode/?\nDisallow: /imode/search?\nDisallow: /jsky?\nDisallow: /jsky/?\nDisallow: /jsky/search?\nDisallow: /pda?\nDisallow: /pda/?\nDisallow: /pda/search?\nDisallow: /sprint_xhtml\nDisallow: /sprint_wml\nDisallow: /pqa\nDisallow: /palm\nDisallow: /gwt/\nDisallow: /purchases\nDisallow: /hws\nDisallow: /bsd?\nDisallow: /linux?\nDisallow: /mac?\nDisallow: /microsoft?\nDisallow: /unclesam?\nDisallow: /answers/search?q=\nDisallow: /local?\nDisallow: /local_url\nDisallow: /froogle?\nDisallow: /products?\nDisallow: /products/\nDisallow: /froogle_\nDisallow: /product_\nDisallow: /products_\nDisallow: /products;\nDisallow: /print\nDisallow: /books\nDisallow: /bkshp?q=\nAllow: /booksrightsholders\nDisallow: /patents?\nDisallow: /patents/\nAllow: /patents/about\nDisallow: /scholar\nDisallow: /complete\nDisallow: /sponsoredlinks\nDisallow: /videosearch?\nDisallow: /videopreview?\nDisallow: /videoprograminfo?\nDisallow: /maps?\nDisallow: /mapstt?\nDisallow: /mapslt?\nDisallow: /maps/stk/\nDisallow: /maps/br?\nDisallow: /mapabcpoi?\nDisallow: /maphp?\nDisallow: /places/\nAllow: /places/$\nDisallow: /maps/place\nDisallow: /help/maps/streetview/partners/welcome/\nDisallow: /lochp?\nDisallow: /center\nDisallow: /ie?\nDisallow: /sms/demo?\nDisallow: /katrina?\nDisallow: /blogsearch?\nDisallow: /blogsearch/\nDisallow: /blogsearch_feeds\nDisallow: /advanced_blog_search\nDisallow: /reader/\nAllow: /reader/play\nDisallow: /uds/\nDisallow: /chart?\nDisallow: /transit?\nDisallow: /mbd?\nDisallow: /extern_js/\nDisallow: /calendar/feeds/\nDisallow: /calendar/ical/\nDisallow: /cl2/feeds/\n" +
+                         "Disallow: /cl2/ical/\nDisallow: /coop/directory\nDisallow: /coop/manage\nDisallow: /trends?\nDisallow: /trends/music?\nDisallow: /trends/hottrends?\nDisallow: /trends/viz?\nDisallow: /notebook/search?\nDisallow: /musica\nDisallow: /musicad\nDisallow: /musicas\nDisallow: /musicl\nDisallow: /musics\nDisallow: /musicsearch\nDisallow: /musicsp\nDisallow: /musiclp\nDisallow: /browsersync\nDisallow: /call\nDisallow: /archivesearch?\nDisallow: /archivesearch/url\nDisallow: /archivesearch/advanced_search\nDisallow: /base/reportbadoffer\nDisallow: /urchin_test/\nDisallow: /movies?\nDisallow: /codesearch?\nDisallow: /codesearch/feeds/search?\nDisallow: /wapsearch?\nDisallow: /safebrowsing\nAllow: /safebrowsing/diagnostic\nAllow: /safebrowsing/report_error/\nAllow: /safebrowsing/report_phish/\nDisallow: /reviews/search?\nDisallow: /orkut/albums\nAllow: /jsapi\nDisallow: /views?\nDisallow: /c/\nDisallow: /cbk\nDisallow: /recharge/dashboard/car\nDisallow: /recharge/dashboard/static/\nDisallow: /translate_a/\nDisallow: /translate_c\nDisallow: /translate_f\nDisallow: /translate_static/\nDisallow: /translate_suggestion\nDisallow: /profiles/me\nAllow: /profiles\nDisallow: /s2/profiles/me\nAllow: /s2/profiles\nAllow: /s2/photos\nAllow: /s2/static\nDisallow: /s2\nDisallow: /transconsole/portal/\nDisallow: /gcc/\nDisallow: /aclk\nDisallow: /cse?\nDisallow: /cse/home\nDisallow: /cse/panel\nDisallow: /cse/manage\nDisallow: /tbproxy/\nDisallow: /imesync/\nDisallow: /shenghuo/search?\nDisallow: /support/forum/search?\nDisallow: /reviews/polls/\nDisallow: /hosted/images/\nDisallow: /ppob/?\nDisallow: /ppob?\nDisallow: /ig/add?\nDisallow: /adwordsresellers\nDisallow: /accounts/o8\nAllow: /accounts/o8/id\nDisallow: /topicsearch?q=\nDisallow: /xfx7/\nDisallow: /squared/api\nDisallow: /squared/search\nDisallow: /squared/table\nDisallow: /toolkit/\nAllow: /toolkit/*.html\nDisallow: /globalmarketfinder/\nAllow: /globalmarketfinder/*.html\nDisallow: /qnasearch?\nDisallow: /errors/\nDisallow: /app/updates\nDisallow: /sidewiki/entry/\nDisallow: /quality_form?\nDisallow: /labs/popgadget/search\nDisallow: /buzz/post\nDisallow: /compressiontest/\nDisallow: /analytics/reporting/\nDisallow: /analytics/admin/\nDisallow: /analytics/web/\nDisallow: /analytics/feeds/\nDisallow: /analytics/settings/\nDisallow: /alerts/\nDisallow: /phone/compare/?\nAllow: /alerts/manage\nSitemap: http://www.gstatic.com/s2/sitemaps/profiles-sitemap.xml\nSitemap: http://www.google.com/hostednews/sitemap_index.xml\nSitemap: http://www.google.com/ventures/sitemap_ventures.xml\nSitemap: http://www.google.com/sitemaps_webmasters.xml\nSitemap: http://www.gstatic.com/trends/websites/sitemaps/sitemapindex.xml\nSitemap: http://www.gstatic.com/dictionary/static/sitemaps/sitemap_index.xml")
+
+func TestFromString005(t *testing.T) {
+    r, err := FromString(robots_text_002, true)
+    if err != nil {
+        t.Fatal(err.String())
+    }
+    ExpectAllow(r, t, "Must allow.")
+}
+
+func TestFromString006(t *testing.T) {
+    r, err := FromString(robots_text_002, true)
+    if err != nil {
+        t.Fatal(err.String())
+    }
+    allow, err1 := r.TestAgent("/search", "SomeBot")
+    if err1 != nil {
+        t.Fatal(err1.String())
+    }
+    if allow {
+        t.Fatal("Must deny.")
+    }
+}
+
+
+func BenchmarkParseFromString001(b *testing.B) {
+    for i := 0; i < b.N; i++ {
+        FromString(robots_text_001, false)
+        b.SetBytes(int64(len(robots_text_001)))
+    }
+}
+
+func BenchmarkParseFromString002(b *testing.B) {
+    for i := 0; i < b.N; i++ {
+        FromString(robots_text_002, false)
+        b.SetBytes(int64(len(robots_text_002)))
+    }
+}
+
+func BenchmarkParseFromResponse401(b *testing.B) {
+    for i := 0; i < b.N; i++ {
+        FromResponse(401, "", false)
+    }
+}
