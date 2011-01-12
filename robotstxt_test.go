@@ -6,16 +6,16 @@ import (
 
 
 func TestFromResponseBasic(t *testing.T) {
-    if _, err := FromResponse(200, ""); err != nil {
+    if _, err := FromResponse(200, "", true); err != nil {
         t.Fatal("FromResponse MUST accept 200/\"\"")
     }
-    if _, err := FromResponse(401, ""); err != nil {
+    if _, err := FromResponse(401, "", true); err != nil {
         t.Fatal("FromResponse MUST accept 401/\"\"")
     }
-    if _, err := FromResponse(403, ""); err != nil {
+    if _, err := FromResponse(403, "", true); err != nil {
         t.Fatal("FromResponse MUST accept 403/\"\"")
     }
-    if _, err := FromResponse(404, ""); err != nil {
+    if _, err := FromResponse(404, "", true); err != nil {
         t.Fatal("FromResponse MUST accept 404/\"\"")
     }
 }
@@ -42,42 +42,42 @@ func ExpectDisallow(r *RobotsData, t *testing.T, msg string) {
 
 
 func TestResponse401(t *testing.T) {
-    r, _ := FromResponse(401, "")
+    r, _ := FromResponse(401, "", true)
     ExpectDisallow(r, t, "FromResponse(401, \"\") MUST disallow everything.")
 }
 
 func TestResponse403(t *testing.T) {
-    r, _ := FromResponse(403, "")
+    r, _ := FromResponse(403, "", true)
     ExpectDisallow(r, t, "FromResponse(403, \"\") MUST disallow everything.")
 }
 
 func TestResponse404(t *testing.T) {
-    r, _ := FromResponse(404, "")
+    r, _ := FromResponse(404, "", true)
     ExpectAllow(r, t, "FromResponse(404, \"\") MUST allow everything.")
 }
 
 
 func TestFromStringBasic(t *testing.T) {
-    if _, err := FromString(""); err != nil {
+    if _, err := FromString("", true); err != nil {
         t.Fatal("FromString MUST accept \"\"")
     }
 }
 
 func TestFromStringEmpty(t *testing.T) {
-    r, _ := FromString("")
+    r, _ := FromString("", true)
     if allow, err := r.TestAgent("/", "Somebot"); err != nil || !allow {
         t.Fatal("FromString(\"\") MUST allow everything.")
     }
 }
 
 func TestFromStringComment(t *testing.T) {
-    if _, err := FromString("# comment"); err != nil {
+    if _, err := FromString("# comment", true); err != nil {
         t.Fatal("FromString MUST accept \"# comment\"")
     }
 }
 
 func TestFromString001(t *testing.T) {
-    r, err := FromString("User-Agent: *\r\nDisallow: /\r\n")
+    r, err := FromString("User-Agent: *\r\nDisallow: /\r\n", true)
     if err != nil {
         t.Fatal(err.String())
     }
@@ -91,7 +91,7 @@ func TestFromString001(t *testing.T) {
 }
 
 func TestFromString002(t *testing.T) {
-    r, err := FromString("User-Agent: *\r\nDisallow: /account\r\n")
+    r, err := FromString("User-Agent: *\r\nDisallow: /account\r\n", true)
     if err != nil {
         t.Fatal(err.String())
     }
@@ -107,7 +107,7 @@ func TestFromString002(t *testing.T) {
 const robots_text_001 = "User-agent: * \nDisallow: /administrator/\nDisallow: /cache/\nDisallow: /components/\nDisallow: /editor/\nDisallow: /forum/\nDisallow: /help/\nDisallow: /images/\nDisallow: /includes/\nDisallow: /language/\nDisallow: /mambots/\nDisallow: /media/\nDisallow: /modules/\nDisallow: /templates/\nDisallow: /installation/\nDisallow: /getcid/\nDisallow: /tooltip/\nDisallow: /getuser/\nDisallow: /download/\nDisallow: /index.php?option=com_phorum*,quote=1\nDisallow: /index.php?option=com_phorum*phorum_query=search\nDisallow: /index.php?option=com_phorum*,newer\nDisallow: /index.php?option=com_phorum*,older\n\nUser-agent: Yandex\nAllow: /\nSitemap: http://www.pravorulya.com/sitemap.xml\nSitemap: http://www.pravorulya.com/sitemap1.xml"
 
 func TestFromString003(t *testing.T) {
-    r, err := FromString(robots_text_001)
+    r, err := FromString(robots_text_001, true)
     if err != nil {
         t.Fatal(err.String())
     }
@@ -121,7 +121,7 @@ func TestFromString003(t *testing.T) {
 }
 
 func TestFromString004(t *testing.T) {
-    r, err := FromString(robots_text_001)
+    r, err := FromString(robots_text_001, true)
     if err != nil {
         t.Fatal(err.String())
     }
