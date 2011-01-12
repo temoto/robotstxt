@@ -131,7 +131,7 @@ func (s *ByteScanner) ScanAll() ([]string, os.Error) {
 func (s *ByteScanner) error(pos token.Position, msg string) {
     s.ErrorCount++
     if !s.Quiet {
-        fmt.Fprintf(os.Stderr, "%s: %s\n", pos.String(), msg)
+        fmt.Fprintf(os.Stderr, "robotstxt from %s: %s\n", pos.String(), msg)
     }
 }
 
