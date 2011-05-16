@@ -74,7 +74,7 @@ func (p *Parser) ParseRule() (r *Rule, err os.Error) {
             return nil, os.NewError("Disallow before User-agent.")
         }
         p.popToken()
-        return &Rule{Agent: p.agent, Uri: t2, Allow: false}, nil
+        return &Rule{Agent: p.agent, Uri: t2, Allow: true}, nil
     }
 
     return nil, os.NewError("Unknown token: " + strconv.Quote(t1))
