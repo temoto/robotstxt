@@ -184,6 +184,22 @@ func TestFromString007(t *testing.T) {
     }
 }
 
+const robots_text_004 = "User-Agent: * \nDisallow: "
+
+func TestFromString008(t *testing.T) {
+    r, err := FromString(robots_text_004, true)
+    if err != nil {
+        t.Fatal(err.String())
+    }
+    allow, err1 := r.TestAgent("/random", "SomeBot")
+    if err1 != nil {
+        t.Fatal(err1.String())
+    }
+    if !allow {
+        t.Fatal("Must allow.")
+    }
+}
+
 func BenchmarkParseFromString001(b *testing.B) {
     for i := 0; i < b.N; i++ {
         FromString(robots_text_001, false)
