@@ -67,7 +67,13 @@ func (p *Parser) ParseRule() (r *Rule, err os.Error) {
             return nil, os.NewError("Disallow before User-agent.")
         }
         p.popToken()
-        return &Rule{Agent: p.agent, Uri: t2, Allow: false}, nil
+
+        if t2 == "" {
+          return &Rule{Agent: p.agent, Uri: t2, Allow: true}, nil
+        } else {
+          return &Rule{Agent: p.agent, Uri: t2, Allow: false}, nil
+        }
+
     case "allow":
         if p.agent == "" {
             // TODO: report error
