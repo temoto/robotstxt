@@ -79,11 +79,11 @@ func TestFromStringComment(t *testing.T) {
 func TestFromString001(t *testing.T) {
     r, err := FromString("User-Agent: *\r\nDisallow: /\r\n", true)
     if err != nil {
-        t.Fatal(err.String())
+        t.Fatal(err.Error())
     }
     allow, err1 := r.TestAgent("/foobar", "SomeAgent")
     if err1 != nil {
-        t.Fatal(err1.String())
+        t.Fatal(err1.Error())
     }
     if allow {
         t.Fatal("Must deny.")
@@ -93,11 +93,11 @@ func TestFromString001(t *testing.T) {
 func TestFromString002(t *testing.T) {
     r, err := FromString("User-Agent: *\r\nDisallow: /account\r\n", true)
     if err != nil {
-        t.Fatal(err.String())
+        t.Fatal(err.Error())
     }
     allow, err1 := r.TestAgent("/foobar", "SomeAgent")
     if err1 != nil {
-        t.Fatal(err1.String())
+        t.Fatal(err1.Error())
     }
     if !allow {
         t.Fatal("Must allow.")
@@ -109,11 +109,11 @@ const robots_text_001 = "User-agent: * \nDisallow: /administrator/\nDisallow: /c
 func TestFromString003(t *testing.T) {
     r, err := FromString(robots_text_001, true)
     if err != nil {
-        t.Fatal(err.String())
+        t.Fatal(err.Error())
     }
     allow, err1 := r.TestAgent("/administrator/", "SomeBot")
     if err1 != nil {
-        t.Fatal(err1.String())
+        t.Fatal(err1.Error())
     }
     if allow {
         t.Fatal("Must deny.")
@@ -123,11 +123,11 @@ func TestFromString003(t *testing.T) {
 func TestFromString004(t *testing.T) {
     r, err := FromString(robots_text_001, true)
     if err != nil {
-        t.Fatal(err.String())
+        t.Fatal(err.Error())
     }
     allow, err1 := r.TestAgent("/paruram", "SomeBot")
     if err1 != nil {
-        t.Fatal(err1.String())
+        t.Fatal(err1.Error())
     }
     if !allow {
         t.Fatal("Must allow.")
@@ -138,7 +138,7 @@ func TestInvalidEncoding(t *testing.T) {
     // Invalid UTF-8 encoding should not break parser.
     _, err := FromString("User-agent: H\xef\xbf\xbdm�h�kki\nDisallow: *", true)
     if err != nil {
-        t.Fatal(err.String())
+        t.Fatal(err.Error())
     }
 }
 
@@ -149,7 +149,7 @@ const robots_text_002 = ("User-agent: *\nDisallow: /search\nDisallow: /groups\nD
 func TestFromString005(t *testing.T) {
     r, err := FromString(robots_text_002, true)
     if err != nil {
-        t.Fatal(err.String())
+        t.Fatal(err.Error())
     }
     ExpectAllow(r, t, "Must allow.")
 }
@@ -157,11 +157,11 @@ func TestFromString005(t *testing.T) {
 func TestFromString006(t *testing.T) {
     r, err := FromString(robots_text_002, true)
     if err != nil {
-        t.Fatal(err.String())
+        t.Fatal(err.Error())
     }
     allow, err1 := r.TestAgent("/search", "SomeBot")
     if err1 != nil {
-        t.Fatal(err1.String())
+        t.Fatal(err1.Error())
     }
     if allow {
         t.Fatal("Must deny.")

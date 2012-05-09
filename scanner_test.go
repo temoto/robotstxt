@@ -20,7 +20,7 @@ func TestScan002(t *testing.T) {
     _, err := sc.Scan()
     //print("---", tok, err)
     if err != nil {
-        t.Fatal(err.String())
+        t.Fatal(err.Error())
     }
 }
 
@@ -30,7 +30,7 @@ func TestScan004(t *testing.T) {
     _, err := sc.Scan()
     //println("---", tok, err)
     if err != nil {
-        t.Fatal(err.String())
+        t.Fatal(err.Error())
     }
 }
 
@@ -40,7 +40,7 @@ func TestScan005(t *testing.T) {
     _, err := sc.Scan()
     //println("---", tok, err)
     if err != nil {
-        t.Fatal(err.String())
+        t.Fatal(err.Error())
     }
     if sc.ErrorCount != 2 {
         t.Fatal("Expecting ErrorCount be exactly 2.")
@@ -53,7 +53,7 @@ func TestScan006(t *testing.T) {
     sc.Feed( []byte(s) , true)
     tokens, err := sc.ScanAll()
     if err != nil {
-        t.Fatal(err.String())
+        t.Fatal(err.Error())
     }
     //println("--- len(tokens):", len(tokens))
     if len(tokens) != 4 {
@@ -70,7 +70,7 @@ func TestScan007(t *testing.T) {
     sc.Feed( []byte(s) , true)
     tokens, err := sc.ScanAll()
     if err != nil {
-        t.Fatal(err.String())
+        t.Fatal(err.Error())
     }
     //println("--- len(tokens):", len(tokens))
     if len(tokens) != 4 {

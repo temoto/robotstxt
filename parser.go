@@ -1,12 +1,11 @@
 package robotstxt
 
 import (
-    "container/vector"
-    "os"
+    "errors"
+    "io"
     "strconv"
     "strings"
 )
-
 
 type Parser struct {
     tokens []string
@@ -14,37 +13,31 @@ type Parser struct {
     agent  string
 }
 
-
 func NewParser(tokens []string) *Parser {
     return &Parser{tokens: tokens}
 }
 
-func (p *Parser) ParseAll() (result []Rule, err os.Error) {
-    var rules vector.Vector
+func (p *Parser) ParseAll() (result []Rule, err error) {
     var r *Rule
     err = nil
     for {
         r, err = p.ParseRule()
         if r != nil {
-            rules.Push(*r)
+            result = append(result, *r)
         }
-        if err == os.EOF {
+        if err == io.EOF {
             err = nil
             break
         }
     }
-    result = make([]Rule, rules.Len())
-    for i := 0; i < rules.Len(); i++ {
-        result[i] = rules[i].(Rule)
-    }
     return result, err
 }
 
-func (p *Parser) ParseRule() (r *Rule, err os.Error) {
+func (p *Parser) ParseRule() (r *Rule, err error) {
     t1, ok1 := p.popToken()
     if !ok1 {
         // proper EOF
-        return nil, os.EOF
+        return nil, io.EOF
     }
 
     t2, ok2 := p.peekToken()
@@ -55,7 +48,7 @@ func (p *Parser) ParseRule() (r *Rule, err os.Error) {
     case "user-agent":
         if !ok2 {
             // TODO: report error
-            return nil, os.NewError("Unexpected EOF at token #" + strconv.Itoa(p.pos) + " namely: \"" + t1 + "\"")
+            return nil, errors.New("Unexpected EOF at token #" + strconv.Itoa(p.pos) + " namely: \"" + t1 + "\"")
         }
         p.agent = t2
         p.popToken()
@@ -64,7 +57,7 @@ func (p *Parser) ParseRule() (r *Rule, err os.Error) {
     case "disallow":
         if p.agent == "" {
             // TODO: report error
-            return nil, os.NewError("Disallow before User-agent.")
+            return nil, errors.New("Disallow before User-agent.")
         }
         p.popToken()
 
@@ -77,13 +70,13 @@ func (p *Parser) ParseRule() (r *Rule, err os.Error) {
     case "allow":
         if p.agent == "" {
             // TODO: report error
-            return nil, os.NewError("Disallow before User-agent.")
+            return nil, errors.New("Disallow before User-agent.")
         }
         p.popToken()
         return &Rule{Agent: p.agent, Uri: t2, Allow: true}, nil
     }
 
-    return nil, os.NewError("Unknown token: " + strconv.Quote(t1))
+    return nil, errors.New("Unknown token: " + strconv.Quote(t1))
 }
 
 func (p *Parser) popToken() (tok string, ok bool) {

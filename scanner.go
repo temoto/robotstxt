@@ -1,14 +1,13 @@
 package robotstxt
 
 import (
-    "container/vector"
     "fmt"
     "go/token"
+    "io"
     "os"
     "strings"
-    "utf8"
+    "unicode/utf8"
 )
-
 
 type ByteScanner struct {
     ErrorCount int
@@ -17,14 +16,12 @@ type ByteScanner struct {
     buf       []byte
     pos       token.Position
     lastChunk bool
-    ch        int
+    ch        rune
     //
     //state string
 }
 
-
 const WhitespaceChars = " \t\v"
-
 
 func NewByteScanner(srcname string, quiet bool) *ByteScanner {
     return &ByteScanner{
@@ -35,7 +32,7 @@ func NewByteScanner(srcname string, quiet bool) *ByteScanner {
     }
 }
 
-func (s *ByteScanner) Feed(input []byte, end bool) (bool, os.Error) {
+func (s *ByteScanner) Feed(input []byte, end bool) (bool, error) {
     s.buf = input
     s.pos.Offset = 0
     s.pos.Line = 1
@@ -50,19 +47,19 @@ func (s *ByteScanner) GetPosition() token.Position {
     return s.pos
 }
 
-func (s *ByteScanner) Scan() (string, os.Error) {
+func (s *ByteScanner) Scan() (string, error) {
     //println("--- Scan(). Offset / len(s.buf): ", s.pos.Offset, len(s.buf))
 
     for {
         // Note Offset > len, not >=, so we can Scan last character.
         if s.lastChunk && s.pos.Offset > len(s.buf) {
-            return "", os.EOF
+            return "", io.EOF
         }
 
         s.skipSpace()
 
         if s.ch == -1 {
-            return "", os.EOF
+            return "", io.EOF
         }
 
         // EOL
@@ -80,7 +77,7 @@ func (s *ByteScanner) Scan() (string, os.Error) {
             s.skipUntilEol()
             //            s.state = "start"
             if s.ch == -1 {
-                return "", os.EOF
+                return "", io.EOF
             }
             // emit newline as separate token
             return "\n", nil
@@ -111,14 +108,14 @@ func (s *ByteScanner) Scan() (string, os.Error) {
     return tok, nil
 }
 
-func (s *ByteScanner) ScanAll() ([]string, os.Error) {
-    var results vector.StringVector
+func (s *ByteScanner) ScanAll() ([]string, error) {
+    var results []string
     for {
         t, err := s.Scan()
         if t != "" {
-            results.Push(t)
+            results = append(results, t)
         }
-        if err == os.EOF {
+        if err == io.EOF {
             break
         }
         if err != nil {
@@ -162,19 +159,19 @@ func (s *ByteScanner) skipUntilEol() {
 }
 
 // Reads next Unicode char.
-func (s *ByteScanner) nextChar() (int, os.Error) {
+func (s *ByteScanner) nextChar() (rune, error) {
     //println("--- nextChar(). Offset / len(s.buf): ", s.pos.Offset, len(s.buf))
 
     if s.pos.Offset >= len(s.buf) {
         s.ch = -1
-        return s.ch, os.EOF
+        return s.ch, io.EOF
     }
     s.pos.Column++
     if s.ch == '\n' {
         s.pos.Line++
         s.pos.Column = 1
     }
-    r, w := int(s.buf[s.pos.Offset]), 1
+    r, w := rune(s.buf[s.pos.Offset]), 1
     if r >= 0x80 {
         r, w = utf8.DecodeRune(s.buf[s.pos.Offset:])
         if r == utf8.RuneError && w == 1 {

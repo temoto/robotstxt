@@ -5,10 +5,9 @@ package robotstxt
 
 import (
     "bytes"
-    "os"
+    "errors"
     "strings"
 )
-
 
 type RobotsData struct {
     DefaultAgent string
@@ -27,8 +26,7 @@ type Rule struct {
 var AllowAll = &RobotsData{allowAll: true}
 var DisallowAll = &RobotsData{disallowAll: true}
 
-
-func FromResponseBytes(statusCode int, body []byte, print_errors bool) (*RobotsData, os.Error) {
+func FromResponseBytes(statusCode int, body []byte, print_errors bool) (*RobotsData, error) {
     switch {
     case statusCode == 404:
         return AllowAll, nil
@@ -41,11 +39,11 @@ func FromResponseBytes(statusCode int, body []byte, print_errors bool) (*RobotsD
     return DisallowAll, nil
 }
 
-func FromResponse(statusCode int, body string, print_errors bool) (*RobotsData, os.Error) {
+func FromResponse(statusCode int, body string, print_errors bool) (*RobotsData, error) {
     return FromResponseBytes(statusCode, []byte(body), print_errors)
 }
 
-func FromBytes(body []byte, print_errors bool) (r *RobotsData, err os.Error) {
+func FromBytes(body []byte, print_errors bool) (r *RobotsData, err error) {
     // special case (probably not worth optimization?)
     trimmed := bytes.TrimSpace(body)
     if len(trimmed) == 0 {
@@ -73,18 +71,18 @@ func FromBytes(body []byte, print_errors bool) (r *RobotsData, err os.Error) {
     return r, err
 }
 
-func FromString(body string, print_errors bool) (r *RobotsData, err os.Error) {
+func FromString(body string, print_errors bool) (r *RobotsData, err error) {
     return FromBytes([]byte(body), print_errors)
 }
 
-func (r *RobotsData) Test(url string) (bool, os.Error) {
+func (r *RobotsData) Test(url string) (bool, error) {
     if r.DefaultAgent == "" {
-        return false, os.NewError("DefaultAgent is empty. You MUST set RobotsData.DefaultAgent to use Test method.")
+        return false, errors.New("DefaultAgent is empty. You MUST set RobotsData.DefaultAgent to use Test method.")
     }
     return r.TestAgent(url, r.DefaultAgent)
 }
 
-func (r *RobotsData) TestAgent(url, agent string) (allow bool, err os.Error) {
+func (r *RobotsData) TestAgent(url, agent string) (allow bool, err error) {
     if r.allowAll {
         return true, nil
     }
