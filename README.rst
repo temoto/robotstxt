@@ -61,7 +61,7 @@ Or with implicit user agent.
 ::
 
     robots.DefaultAgent = "OtherBot"
-    allow, err := robots.TestAgent("/")
+    allow, err := robots.Test("/")
     if err != nil {
         // robots.txt check error
         return false, err
