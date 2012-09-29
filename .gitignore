@@ -7,4 +7,5 @@ _cgo_*
 _obj
 _test
 6.out
-
+*.sublime-*
+.DS_Store

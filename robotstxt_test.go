@@ -170,11 +170,11 @@ const robots_text_003 = "User-Agent: * \nAllow: /"
 func TestFromString007(t *testing.T) {
 	r, err := FromString(robots_text_003, true)
 	if err != nil {
-		t.Fatal(err.String())
+		t.Fatal(err.Error())
 	}
-	allow, err1 := r.TestAgent("/random", "SomeBot")
-	if err1 != nil {
-		t.Fatal(err1.String())
+	allow, err := r.TestAgent("/random", "SomeBot")
+	if err != nil {
+		t.Fatal(err.Error())
 	}
 	if !allow {
 		t.Fatal("Must allow.")
@@ -186,11 +186,11 @@ const robots_text_004 = "User-Agent: * \nDisallow: "
 func TestFromString008(t *testing.T) {
 	r, err := FromString(robots_text_004, true)
 	if err != nil {
-		t.Fatal(err.String())
+		t.Fatal(err.Error())
 	}
-	allow, err1 := r.TestAgent("/random", "SomeBot")
-	if err1 != nil {
-		t.Fatal(err1.String())
+	allow, err := r.TestAgent("/random", "SomeBot")
+	if err != nil {
+		t.Fatal(err.Error())
 	}
 	if !allow {
 		t.Fatal("Must allow.")
