@@ -197,6 +197,31 @@ func TestFromString008(t *testing.T) {
 	}
 }
 
+const robots_text_005 = `User-agent: Google
+Disallow:
+User-agent: *
+Disallow: /`
+
+func TestRobotstxtOrgCase1(t *testing.T) {
+	if r, err := FromString(robots_text_005, false); err != nil {
+		t.Fatal(err.Error())
+	} else if allow, err := r.TestAgent("/path/page1.html", "SomeBot"); err != nil {
+		t.Fatal(err.Error())
+	} else if allow {
+		t.Fatal("Must disallow.")
+	}
+}
+
+func TestRobotstxtOrgCase2(t *testing.T) {
+	if r, err := FromString(robots_text_005, false); err != nil {
+		t.Fatal(err.Error())
+	} else if allow, err := r.TestAgent("/path/page1.html", "Googlebot"); err != nil {
+		t.Fatal(err.Error())
+	} else if !allow {
+		t.Fatal("Must allow.")
+	}
+}
+
 func BenchmarkParseFromString001(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		FromString(robots_text_001, false)
