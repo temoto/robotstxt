@@ -119,7 +119,7 @@ func (p *parser) parseLine() (li *lineInfo, err error) {
 	if !ok2 {
 		// EOF, no value associated with the token, so ignore token and return
 		if strings.Trim(t1, " \t\v\n\r") != "" {
-			return nil, errors.New(fmt.Sprintf(`Unexpected EOF at token #%d namely: "%s".`, p.pos, t1))
+			return &lineInfo{t: lIgnore}, nil
 		} else {
 			return nil, io.EOF
 		}
@@ -181,7 +181,7 @@ func (p *parser) parseLine() (li *lineInfo, err error) {
 	}
 
 	// Consume t2 token
-	//p.popToken()
+	p.popToken()
 	return &lineInfo{t: lUnknown, k: t1}, nil
 }
 
