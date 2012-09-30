@@ -46,6 +46,7 @@ func newParser(tokens []string) *parser {
 
 func (p *parser) parseAll() (groups []*group, sitemaps []string, errs []error) {
 	var curGroup *group
+	var isEmptyGroup bool
 
 	// Reset internal fields, tokens are assigned at creation time, never change
 	p.pos = 0
@@ -61,6 +62,8 @@ func (p *parser) parseAll() (groups []*group, sitemaps []string, errs []error) {
 			if err == io.EOF {
 				// Append the current group if any
 				if curGroup != nil {
+					// Add it even if it is empty, because it may mean that an agent
+					// will match this empty (allow all) group instead of another.
 					groups = append(groups, curGroup)
 				}
 				break
@@ -69,32 +72,44 @@ func (p *parser) parseAll() (groups []*group, sitemaps []string, errs []error) {
 		} else {
 			switch li.t {
 			case lUserAgent:
-				// End previous group
-				if curGroup != nil {
+				if curGroup != nil && !isEmptyGroup {
+					// End previous group
 					groups = append(groups, curGroup)
+					curGroup = nil
 				}
-				// Start new group
-				curGroup = &group{agent: li.vs}
+				if curGroup == nil {
+					curGroup = new(group)
+					isEmptyGroup = true
+				}
+				// Add the user agent
+				curGroup.agents = append(curGroup.agents, li.vs)
+
 			case lDisallow:
 				// Error if no current group
 				if curGroup == nil {
 					errs = append(errs, errors.New(fmt.Sprintf("Disallow before User-agent at token #%d.", p.pos)))
 				} else {
+					isEmptyGroup = false
 					curGroup.rules = append(curGroup.rules, &rule{li.vs, false, nil})
 				}
+
 			case lAllow:
 				// Error if no current group
 				if curGroup == nil {
 					errs = append(errs, errors.New(fmt.Sprintf("Allow before User-agent at token #%d.", p.pos)))
 				} else {
+					isEmptyGroup = false
 					curGroup.rules = append(curGroup.rules, &rule{li.vs, true, nil})
 				}
+
 			case lSitemap:
 				sitemaps = append(sitemaps, li.vs)
+
 			case lCrawlDelay:
 				if curGroup == nil {
 					errs = append(errs, errors.New(fmt.Sprintf("Crawl-delay before User-agent at token #%d.", p.pos)))
 				} else {
+					isEmptyGroup = false
 					curGroup.crawlDelay = li.vf
 				}
 			}
@@ -150,6 +165,8 @@ func (p *parser) parseLine() (li *lineInfo, err error) {
 		// Handling of <field> elements with simple errors / typos (eg "useragent"
 		// instead of "user-agent") is undefined and may be interpreted as correct
 		// directives by some user-agents.
+		// The user-agent is non-case-sensitive.
+		t2 = strings.ToLower(t2)
 		return returnStringVal(lUserAgent)
 
 	case "disallow":
