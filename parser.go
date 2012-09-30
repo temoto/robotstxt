@@ -7,10 +7,11 @@ import (
 	"strings"
 )
 
-type Parser struct {
-	tokens []string
-	pos    int
-	agent  string
+type parser struct {
+	tokens   []string
+	pos      int
+	agent    string
+	sitemaps []string
 }
 
 func NewParser(tokens []string) *Parser {
@@ -45,7 +46,12 @@ func (p *Parser) ParseRule() (r *Rule, err error) {
 	case "\n":
 		// Don't consume t2 and continue parsing
 		return nil, nil
-	case "user-agent":
+
+	case "user-agent", "useragent":
+		// From google's spec:
+		// Handling of <field> elements with simple errors / typos (eg "useragent"
+		// instead of "user-agent") is undefined and may be interpreted as correct
+		// directives by some user-agents.
 		if !ok2 {
 			// TODO: report error
 			return nil, errors.New("Unexpected EOF at token #" + strconv.Itoa(p.pos) + " namely: \"" + t1 + "\"")
@@ -54,6 +60,7 @@ func (p *Parser) ParseRule() (r *Rule, err error) {
 		p.popToken()
 		// continue parsing
 		return nil, nil
+
 	case "disallow":
 		if p.agent == "" {
 			// TODO: report error
@@ -61,19 +68,45 @@ func (p *Parser) ParseRule() (r *Rule, err error) {
 		}
 		p.popToken()
 
-		if t2 == "" {
-			return &Rule{Agent: p.agent, Uri: t2, Allow: true}, nil
-		} else {
+		// From google's spec:
+		// When no path is specified, the directive is ignored.
+		if t2 != "" {
 			return &Rule{Agent: p.agent, Uri: t2, Allow: false}, nil
+		} else {
+			return nil, nil
 		}
 
 	case "allow":
 		if p.agent == "" {
 			// TODO: report error
-			return nil, errors.New("Disallow before User-agent.")
+			return nil, errors.New("Allow before User-agent.")
 		}
 		p.popToken()
-		return &Rule{Agent: p.agent, Uri: t2, Allow: true}, nil
+		// From google's spec:
+		// When no path is specified, the directive is ignored.
+		if t2 != "" {
+			return &Rule{Agent: p.agent, Uri: t2, Allow: true}, nil
+		} else {
+			return nil, nil
+		}
+
+	case "sitemap":
+		// Non-group field, applies to the host as a whole, not to a specific user-agent
+		if t2 != "" {
+			p.sitemaps = append(p.sitemaps, t2)
+		}
+		p.popToken()
+		return nil, nil
+
+	case "crawl-delay", "crawldelay":
+		// From http://en.wikipedia.org/wiki/Robots_exclusion_standard#Nonstandard_extensions
+		// Several major crawlers support a Crawl-delay parameter, set to the
+		// number of seconds to wait between successive requests to the same server.
+		if p.agent == "" {
+			return nil, errors.New("Crawl-delay before User-agent.")
+		}
+		p.popToken()
+		// TODO : Continue here with crawl-delay...
 	}
 
 	return nil, errors.New("Unknown token: " + strconv.Quote(t1))

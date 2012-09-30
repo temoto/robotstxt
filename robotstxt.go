@@ -12,30 +12,46 @@ import (
 type RobotsData struct {
 	DefaultAgent string
 	// private
-	rules       []Rule
+	groups      []group
 	allowAll    bool
 	disallowAll bool
+	sitemaps    []string
 }
 
-type Rule struct {
-	Agent string
-	Uri   string
-	Allow bool
+type group struct {
+	agent      string
+	rules      []rule
+	crawlDelay uint
 }
 
-var AllowAll = &RobotsData{allowAll: true}
-var DisallowAll = &RobotsData{disallowAll: true}
+type rule struct {
+	path  string
+	allow bool
+}
+
+var allowAll = &RobotsData{allowAll: true}
+var disallowAll = &RobotsData{disallowAll: true}
 
 func FromResponseBytes(statusCode int, body []byte, print_errors bool) (*RobotsData, error) {
 	switch {
-	case statusCode == 404:
+	//
+	// From https://developers.google.com/webmasters/control-crawl-index/docs/robots_txt
+	//
+	// Google treats all 4xx errors in the same way and assumes that no valid
+	// robots.txt file exists. It is assumed that there are no restrictions.
+	// This is a "full allow" for crawling. Note: this includes 401
+	// "Unauthorized" and 403 "Forbidden" HTTP result codes.
+	case statusCode >= 400 && statusCode < 500:
 		return AllowAll, nil
-	case statusCode == 401 || statusCode == 403:
-		return DisallowAll, nil
 	case statusCode >= 200 && statusCode < 300:
 		return FromBytes(body, print_errors)
 	}
 	// Conservative disallow all default
+	//
+	// From https://developers.google.com/webmasters/control-crawl-index/docs/robots_txt
+	//
+	// Server errors (5xx) are seen as temporary errors that result in a "full
+	// disallow" of crawling.
 	return DisallowAll, nil
 }
 
@@ -75,19 +91,16 @@ func FromString(body string, print_errors bool) (r *RobotsData, err error) {
 	return FromBytes([]byte(body), print_errors)
 }
 
-func (r *RobotsData) Test(url string) (bool, error) {
-	if r.DefaultAgent == "" {
-		return false, errors.New("DefaultAgent is empty. You MUST set RobotsData.DefaultAgent to use Test method.")
-	}
+func (r *RobotsData) Test(url string) bool {
 	return r.TestAgent(url, r.DefaultAgent)
 }
 
-func (r *RobotsData) TestAgent(url, agent string) (allow bool, err error) {
+func (r *RobotsData) TestAgent(url, agent string) (allow bool) {
 	if r.allowAll {
-		return true, nil
+		return true
 	}
 	if r.disallowAll {
-		return false, nil
+		return false
 	}
 
 	// optimistic
@@ -103,7 +116,7 @@ func (r *RobotsData) TestAgent(url, agent string) (allow bool, err error) {
 		}
 	}
 
-	return allow, nil
+	return allow
 }
 
 func (rule *Rule) MatchAgent(agent string) bool {
