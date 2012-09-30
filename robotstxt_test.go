@@ -20,10 +20,7 @@ func TestFromResponseBasic(t *testing.T) {
 }
 
 func _expectAllow(r *RobotsData, t *testing.T) bool {
-	allow, err := r.TestAgent("/", "Somebot")
-	if err != nil {
-		t.Fatal("Unexpected error.")
-	}
+	allow := r.TestAgent("/", "Somebot")
 	return allow
 }
 
@@ -41,12 +38,12 @@ func ExpectDisallow(r *RobotsData, t *testing.T, msg string) {
 
 func TestResponse401(t *testing.T) {
 	r, _ := FromResponse(401, "", true)
-	ExpectDisallow(r, t, "FromResponse(401, \"\") MUST disallow everything.")
+	ExpectAllow(r, t, "FromResponse(401, \"\") MUST allow everything.")
 }
 
 func TestResponse403(t *testing.T) {
 	r, _ := FromResponse(403, "", true)
-	ExpectDisallow(r, t, "FromResponse(403, \"\") MUST disallow everything.")
+	ExpectAllow(r, t, "FromResponse(403, \"\") MUST allow everything.")
 }
 
 func TestResponse404(t *testing.T) {
@@ -62,7 +59,7 @@ func TestFromStringBasic(t *testing.T) {
 
 func TestFromStringEmpty(t *testing.T) {
 	r, _ := FromString("", true)
-	if allow, err := r.TestAgent("/", "Somebot"); err != nil || !allow {
+	if allow := r.TestAgent("/", "Somebot"); !allow {
 		t.Fatal("FromString(\"\") MUST allow everything.")
 	}
 }
@@ -78,10 +75,7 @@ func TestFromString001(t *testing.T) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	allow, err1 := r.TestAgent("/foobar", "SomeAgent")
-	if err1 != nil {
-		t.Fatal(err1.Error())
-	}
+	allow := r.TestAgent("/foobar", "SomeAgent")
 	if allow {
 		t.Fatal("Must deny.")
 	}
@@ -92,10 +86,7 @@ func TestFromString002(t *testing.T) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	allow, err1 := r.TestAgent("/foobar", "SomeAgent")
-	if err1 != nil {
-		t.Fatal(err1.Error())
-	}
+	allow := r.TestAgent("/foobar", "SomeAgent")
 	if !allow {
 		t.Fatal("Must allow.")
 	}
@@ -108,10 +99,7 @@ func TestFromString003(t *testing.T) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	allow, err1 := r.TestAgent("/administrator/", "SomeBot")
-	if err1 != nil {
-		t.Fatal(err1.Error())
-	}
+	allow := r.TestAgent("/administrator/", "SomeBot")
 	if allow {
 		t.Fatal("Must deny.")
 	}
@@ -122,10 +110,7 @@ func TestFromString004(t *testing.T) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	allow, err1 := r.TestAgent("/paruram", "SomeBot")
-	if err1 != nil {
-		t.Fatal(err1.Error())
-	}
+	allow := r.TestAgent("/paruram", "SomeBot")
 	if !allow {
 		t.Fatal("Must allow.")
 	}
@@ -156,10 +141,7 @@ func TestFromString006(t *testing.T) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	allow, err1 := r.TestAgent("/search", "SomeBot")
-	if err1 != nil {
-		t.Fatal(err1.Error())
-	}
+	allow := r.TestAgent("/search", "SomeBot")
 	if allow {
 		t.Fatal("Must deny.")
 	}
@@ -172,10 +154,7 @@ func TestFromString007(t *testing.T) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	allow, err := r.TestAgent("/random", "SomeBot")
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	allow := r.TestAgent("/random", "SomeBot")
 	if !allow {
 		t.Fatal("Must allow.")
 	}
@@ -186,12 +165,10 @@ const robots_text_004 = "User-Agent: * \nDisallow: "
 func TestFromString008(t *testing.T) {
 	r, err := FromString(robots_text_004, true)
 	if err != nil {
+		t.Log(robots_text_004)
 		t.Fatal(err.Error())
 	}
-	allow, err := r.TestAgent("/random", "SomeBot")
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	allow := r.TestAgent("/random", "SomeBot")
 	if !allow {
 		t.Fatal("Must allow.")
 	}
@@ -205,9 +182,7 @@ Disallow: /`
 func TestRobotstxtOrgCase1(t *testing.T) {
 	if r, err := FromString(robots_text_005, false); err != nil {
 		t.Fatal(err.Error())
-	} else if allow, err := r.TestAgent("/path/page1.html", "SomeBot"); err != nil {
-		t.Fatal(err.Error())
-	} else if allow {
+	} else if allow := r.TestAgent("/path/page1.html", "SomeBot"); allow {
 		t.Fatal("Must disallow.")
 	}
 }
@@ -215,9 +190,7 @@ func TestRobotstxtOrgCase1(t *testing.T) {
 func TestRobotstxtOrgCase2(t *testing.T) {
 	if r, err := FromString(robots_text_005, false); err != nil {
 		t.Fatal(err.Error())
-	} else if allow, err := r.TestAgent("/path/page1.html", "Googlebot"); err != nil {
-		t.Fatal(err.Error())
-	} else if !allow {
+	} else if allow := r.TestAgent("/path/page1.html", "Googlebot"); !allow {
 		t.Fatal("Must allow.")
 	}
 }

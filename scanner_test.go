@@ -7,14 +7,14 @@ import (
 )
 
 func TestScan001(t *testing.T) {
-	sc := NewByteScanner("test-001", false)
+	sc := newByteScanner("test-001", false)
 	if _, err := sc.Scan(); err == nil {
 		t.Fatal("Empty ByteScanner should fail on Scan.")
 	}
 }
 
 func TestScan002(t *testing.T) {
-	sc := NewByteScanner("test-002", false)
+	sc := newByteScanner("test-002", false)
 	sc.Feed([]byte("foo"), true)
 	_, err := sc.Scan()
 	//print("---", tok, err)
@@ -24,7 +24,7 @@ func TestScan002(t *testing.T) {
 }
 
 func TestScan004(t *testing.T) {
-	sc := NewByteScanner("test-004", false)
+	sc := newByteScanner("test-004", false)
 	sc.Feed([]byte("\u2010"), true)
 	_, err := sc.Scan()
 	//println("---", tok, err)
@@ -34,7 +34,7 @@ func TestScan004(t *testing.T) {
 }
 
 func TestScan005(t *testing.T) {
-	sc := NewByteScanner("test-005", true)
+	sc := newByteScanner("test-005", true)
 	sc.Feed([]byte("\xd9\xd9"), true)
 	_, err := sc.Scan()
 	//println("---", tok, err)
@@ -47,7 +47,7 @@ func TestScan005(t *testing.T) {
 }
 
 func TestScan006(t *testing.T) {
-	sc := NewByteScanner("test-006", false)
+	sc := newByteScanner("test-006", false)
 	s := "# comment \r\nSomething: Somewhere\r\n"
 	sc.Feed([]byte(s), true)
 	tokens, err := sc.ScanAll()
@@ -64,7 +64,7 @@ func TestScan006(t *testing.T) {
 }
 
 func TestScan007(t *testing.T) {
-	sc := NewByteScanner("test-007", false)
+	sc := newByteScanner("test-007", false)
 	s := "# comment \r\n# more comments\n\nDisallow:\r"
 	sc.Feed([]byte(s), true)
 	tokens, err := sc.ScanAll()
