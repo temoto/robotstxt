@@ -23,7 +23,7 @@ type RobotsData struct {
 }
 
 type group struct {
-	agent      string
+	agents     []string
 	rules      []*rule
 	crawlDelay float64
 }
@@ -114,6 +114,8 @@ func (r *RobotsData) TestAgent(path, agent string) (allow bool) {
 	}
 
 	// Find a group of rules that applies to this agent
+	// From google's spec:
+	// The user-agent is non-case-sensitive.
 	if g := r.findGroup(agent); g != nil {
 		// Find a rule that applies to this url
 		if r := g.findRule(path); r != nil {
@@ -135,15 +137,18 @@ func (r *RobotsData) TestAgent(path, agent string) (allow bool) {
 func (r *RobotsData) findGroup(agent string) (ret *group) {
 	var prefixLen int
 
+	agent = strings.ToLower(agent)
 	for _, g := range r.groups {
-		if g.agent == "*" && prefixLen == 0 {
-			// Weakest match possible
-			prefixLen = 1
-			ret = g
-		} else if strings.HasPrefix(agent, g.agent) {
-			if l := len(g.agent); l > prefixLen {
-				prefixLen = l
+		for _, a := range g.agents {
+			if a == "*" && prefixLen == 0 {
+				// Weakest match possible
+				prefixLen = 1
 				ret = g
+			} else if strings.HasPrefix(agent, a) {
+				if l := len(a); l > prefixLen {
+					prefixLen = l
+					ret = g
+				}
 			}
 		}
 	}
