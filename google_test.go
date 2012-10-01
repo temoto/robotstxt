@@ -44,6 +44,9 @@ sitemap: http://test.com/c
 user-agent: f
 disallow: /g
 crawl-delay: 5`
+
+	robots_case_wildcards = `user-agent: *
+Disallow: /path*l$`
 )
 
 func TestGroupOrder(t *testing.T) {
@@ -113,6 +116,16 @@ func TestCrawlDelays(t *testing.T) {
 		}
 		if r.groups[2].crawlDelay != 5 {
 			t.Fatalf("Expected crawl delay of 5 for group 3, got %f", r.groups[2].crawlDelay)
+		}
+	}
+}
+
+func TestWildcards(t *testing.T) {
+	if r, e := FromString(robots_case_wildcards, false); e != nil {
+		t.Fatal(e)
+	} else {
+		if s := r.groups[0].rules[0].pattern.String(); s != "/path.*l$" {
+			t.Fatalf("Expected pattern to be /path.*l$, got %s", s)
 		}
 	}
 }
