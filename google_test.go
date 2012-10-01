@@ -1,6 +1,7 @@
 package robotstxt
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -47,6 +48,41 @@ crawl-delay: 5`
 
 	robots_case_wildcards = `user-agent: *
 Disallow: /path*l$`
+
+	robots_case_matching = `user-agent: a
+Disallow: /
+user-agent: b
+Disallow: /*
+user-agent: c
+Disallow: /fish
+user-agent: d
+Disallow: /fish*
+user-agent: e
+Disallow: /fish/
+user-agent: f
+Disallow: fish/
+user-agent: g
+Disallow: /*.php
+user-agent: h
+Disallow: /*.php$
+user-agent: i
+Disallow: /fish*.php`
+
+	robots_case_precedence = `user-agent: a
+Disallow: /
+Allow: /p
+user-agent: b
+Disallow: /folder
+Allow: /folder/
+user-agent: c
+Disallow: /*.htm
+Allow: /page
+user-agent: d
+Disallow: /
+Allow: /$
+user-agent: e
+Disallow: /
+Allow: /$`
 )
 
 func TestGroupOrder(t *testing.T) {
@@ -126,6 +162,143 @@ func TestWildcards(t *testing.T) {
 	} else {
 		if s := r.groups[0].rules[0].pattern.String(); s != "/path.*l$" {
 			t.Fatalf("Expected pattern to be /path.*l$, got %s", s)
+		}
+	}
+}
+
+func TestURLMatching(t *testing.T) {
+	var ok bool
+
+	cases := map[string][]string{
+		"a": []string{
+			"/",
+			"/test",
+			"",
+			"/path/to/whatever",
+		},
+		"b": []string{
+			"/",
+			"/test",
+			"",
+			"/path/to/whatever",
+		},
+		"c": []string{
+			"/fish",
+			"/fish.html",
+			"/fish/salmon.html",
+			"/fishheads",
+			"/fishheads/yummy.html",
+			"/fish.php?id=anything",
+			"^/Fish.asp",
+			"^/catfish",
+			"^/?id=fish",
+		},
+		"d": []string{
+			"/fish",
+			"/fish.html",
+			"/fish/salmon.html",
+			"/fishheads",
+			"/fishheads/yummy.html",
+			"/fish.php?id=anything",
+			"^/Fish.asp",
+			"^/catfish",
+			"^/?id=fish",
+		},
+		"e": []string{
+			"/fish/",
+			"/fish/?id=anything",
+			"/fish/salmon.htm",
+			"^/fish",
+			"^/fish.html",
+			"^/Fish/Salmon.asp",
+		},
+		"f": []string{
+			"/fish/",
+			"/fish/?id=anything",
+			"/fish/salmon.htm",
+			"^/fish",
+			"^/fish.html",
+			"^/Fish/Salmon.asp",
+		},
+		"g": []string{
+			"/filename.php",
+			"/folder/filename.php",
+			"/folder/filename.php?parameters",
+			"/folder/any.php.file.html",
+			"/filename.php/",
+			"^/",
+			"^/windows.PHP",
+		},
+		"h": []string{
+			"/filename.php",
+			"/folder/filename.php",
+			"^/filename.php?parameters",
+			"^/filename.php/",
+			"^/filename.php5",
+			"^/windows.PHP",
+		},
+		"i": []string{
+			"/fish.php",
+			"/fishheads/catfish.php?parameters",
+			"^/Fish.PHP",
+		},
+	}
+	if r, e := FromString(robots_case_matching, false); e != nil {
+		t.Fatal(e)
+	} else {
+		for k, ar := range cases {
+			for _, p := range ar {
+				ok = strings.HasPrefix(p, "^")
+				if ok {
+					p = p[1:]
+				}
+				if allow := r.TestAgent(p, k); allow != ok {
+					t.Errorf("Agent %s, path %s, expected %v, got %v", k, p, ok, allow)
+				}
+			}
+		}
+	}
+}
+
+func TestURLPrecedence(t *testing.T) {
+	var ok bool
+
+	cases := map[string][]string{
+		"a": []string{
+			"/page",
+			"^/test",
+		},
+		"b": []string{
+			"/folder/page",
+			"^/folder1",
+			"^/folder.htm",
+		},
+		"c": []string{
+			"^/page.htm",
+			"/page1.asp",
+		},
+		"d": []string{
+			"/",
+			"^/index",
+		},
+		"e": []string{
+			"^/page.htm",
+			"/",
+		},
+	}
+	if r, e := FromString(robots_case_precedence, false); e != nil {
+		t.Fatal(e)
+	} else {
+		for k, ar := range cases {
+			for _, p := range ar {
+				ok = !strings.HasPrefix(p, "^")
+				if !ok {
+					p = p[1:]
+				}
+				if allow := r.TestAgent(p, k); allow != ok {
+					t.Errorf("Agent %s, path %s, expected %v, got %v", k, p, ok, allow)
+				}
+			}
 		}
 	}
 }
