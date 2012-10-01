@@ -119,11 +119,6 @@ func (p *parser) parseAll() (groups []*group, sitemaps []string, errs []error) {
 			}
 		}
 	}
-	if len(errs) > 0 {
-		for _, e := range errs {
-			fmt.Printf("Error: %s\n", e.Error())
-		}
-	}
 	return
 }
 

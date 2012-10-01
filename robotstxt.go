@@ -9,6 +9,8 @@ package robotstxt
 import (
 	"bytes"
 	"errors"
+	"fmt"
+	"os"
 	"regexp"
 	"strings"
 )
@@ -91,7 +93,12 @@ func FromBytes(body []byte, print_errors bool) (r *RobotsData, err error) {
 	parser := newParser(tokens)
 	r.groups, r.sitemaps, errs = parser.parseAll()
 	if len(errs) > 0 {
-		return nil, errors.New("Parse error.")
+		if print_errors {
+			for _, e := range errs {
+				fmt.Fprintln(os.Stderr, e)
+			}
+		}
+		return nil, errors.New("Parse error. Use print_errors = true to print on stderr.")
 	}
 
 	return r, nil
@@ -105,7 +112,7 @@ func (r *RobotsData) Test(path string) bool {
 	return r.TestAgent(path, r.DefaultAgent)
 }
 
-func (r *RobotsData) TestAgent(path, agent string) (allow bool) {
+func (r *RobotsData) TestAgent(path, agent string) bool {
 	if r.allowAll {
 		return true
 	}
