@@ -33,11 +33,11 @@ type parser struct {
 }
 
 type lineInfo struct {
-	t  lineType
-	k  string
-	vs string
-	vf float64
-	vr *regexp.Regexp
+	t  lineType       // Type of line key
+	k  string         // String representation of the type of key
+	vs string         // String value of the key
+	vf float64        // Float value of the key
+	vr *regexp.Regexp // Regexp value of the key
 }
 
 func newParser(tokens []string) *parser {
@@ -50,12 +50,6 @@ func (p *parser) parseAll() (groups []*group, sitemaps []string, errs []error) {
 
 	// Reset internal fields, tokens are assigned at creation time, never change
 	p.pos = 0
-
-	// TODO : Two successive user-agent lines are part of the same group, so a group
-	// may apply to more than one user-agent!
-	// Re: Google's spec:
-	// There are three distinct groups specified, one for "a" and one for "b"
-	// as well as one for both "e" and "f".
 
 	for {
 		if li, err := p.parseLine(); err != nil {
@@ -72,6 +66,8 @@ func (p *parser) parseAll() (groups []*group, sitemaps []string, errs []error) {
 		} else {
 			switch li.t {
 			case lUserAgent:
+				// Two successive user-agent lines are part of the same group, so a group
+				// may apply to more than one user-agent.
 				if curGroup != nil && !isEmptyGroup {
 					// End previous group
 					groups = append(groups, curGroup)
@@ -90,7 +86,11 @@ func (p *parser) parseAll() (groups []*group, sitemaps []string, errs []error) {
 					errs = append(errs, errors.New(fmt.Sprintf("Disallow before User-agent at token #%d.", p.pos)))
 				} else {
 					isEmptyGroup = false
-					curGroup.rules = append(curGroup.rules, &rule{li.vs, false, nil})
+					if li.vr != nil {
+						curGroup.rules = append(curGroup.rules, &rule{"", false, li.vr})
+					} else {
+						curGroup.rules = append(curGroup.rules, &rule{li.vs, false, nil})
+					}
 				}
 
 			case lAllow:
@@ -99,7 +99,11 @@ func (p *parser) parseAll() (groups []*group, sitemaps []string, errs []error) {
 					errs = append(errs, errors.New(fmt.Sprintf("Allow before User-agent at token #%d.", p.pos)))
 				} else {
 					isEmptyGroup = false
-					curGroup.rules = append(curGroup.rules, &rule{li.vs, true, nil})
+					if li.vr != nil {
+						curGroup.rules = append(curGroup.rules, &rule{"", true, li.vr})
+					} else {
+						curGroup.rules = append(curGroup.rules, &rule{li.vs, true, nil})
+					}
 				}
 
 			case lSitemap:
@@ -133,11 +137,7 @@ func (p *parser) parseLine() (li *lineInfo, err error) {
 	t2, ok2 := p.peekToken()
 	if !ok2 {
 		// EOF, no value associated with the token, so ignore token and return
-		if strings.Trim(t1, " \t\v\n\r") != "" {
-			return &lineInfo{t: lIgnore}, nil
-		} else {
-			return nil, io.EOF
-		}
+		return nil, io.EOF
 	}
 
 	// Helper closure for all string-based tokens, common behaviour:
@@ -152,8 +152,44 @@ func (p *parser) parseLine() (li *lineInfo, err error) {
 		return &lineInfo{t: lIgnore}, nil
 	}
 
-	// TODO : For paths, automatically add the starting "/", ignore a trailing "*",
-	// and manage wildcards within a path (turn into a pattern)
+	// Helper closure for all path tokens (allow/disallow), common behaviour:
+	// - Consume t2 token
+	// - If empty, return unkown line info
+	// - Otherwise, normalize the path (add leading "/" if missing, remove trailing "*")
+	// - Detect if wildcards are present, if so, compile into a regexp
+	// - Return the specified line info
+	returnPathVal := func(t lineType) (*lineInfo, error) {
+		p.popToken()
+		if t2 != "" {
+			if !strings.HasPrefix(t2, "/") {
+				t2 = "/" + t2
+			}
+			if strings.HasSuffix(t2, "*") {
+				t2 = strings.TrimRight(t2, "*")
+			}
+			// From google's spec:
+			// Google, Bing, Yahoo, and Ask support a limited form of
+			// "wildcards" for path values. These are:
+			//   * designates 0 or more instances of any valid character
+			//   $ designates the end of the URL
+			if strings.ContainsAny(t2, "*$") {
+				// Must compile a regexp, this is a pattern.
+				// Escape string before compile.
+				t2 = regexp.QuoteMeta(t2)
+				t2 = strings.Replace(t2, `\*`, `.*`, -1)
+				t2 = strings.Replace(t2, `\$`, `$`, -1)
+				if r, e := regexp.Compile(t2); e != nil {
+					return nil, e
+				} else {
+					return &lineInfo{t: t, k: t1, vr: r}, nil
+				}
+			} else {
+				// Simple string path
+				return &lineInfo{t: t, k: t1, vs: t2}, nil
+			}
+		}
+		return &lineInfo{t: lIgnore}, nil
+	}
 
 	switch strings.ToLower(t1) {
 	case "\n":
@@ -174,12 +210,12 @@ func (p *parser) parseLine() (li *lineInfo, err error) {
 		// When no path is specified, the directive is ignored (so an empty Disallow
 		// CAN be an allow, since allow is the default. The actual result depends
 		// on the other rules in the group).
-		return returnStringVal(lDisallow)
+		return returnPathVal(lDisallow)
 
 	case "allow":
 		// From google's spec:
 		// When no path is specified, the directive is ignored.
-		return returnStringVal(lAllow)
+		return returnPathVal(lAllow)
 
 	case "sitemap":
 		// Non-group field, applies to the host as a whole, not to a specific user-agent
