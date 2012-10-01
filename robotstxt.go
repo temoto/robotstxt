@@ -169,7 +169,17 @@ func (g *group) findRule(path string) (ret *rule) {
 	var prefixLen int
 
 	for _, r := range g.rules {
-		if r.path == "/" && prefixLen == 0 {
+		if r.pattern != nil {
+			if r.pattern.MatchString(path) {
+				// Consider this a match equal to the length of the pattern.
+				// From google's spec:
+				// The order of precedence for rules with wildcards is undefined.
+				if l := len(r.pattern.String()); l > prefixLen {
+					prefixLen = len(r.pattern.String())
+					ret = r
+				}
+			}
+		} else if r.path == "/" && prefixLen == 0 {
 			// Weakest match possible
 			prefixLen = 1
 			ret = r
