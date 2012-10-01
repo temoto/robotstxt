@@ -30,40 +30,32 @@ to init robots data from HTTP response status code and body::
         return false, err
     }
 
-Passing status code applies following trivial logic:
+Passing status code applies following logic in line with google's interpretation of robots.txt files:
 
-    * status code = 401, 403 -> disallow all
-    * status code = 404      -> allow all
-    * all other statuses     -> parse body with `FromString` and apply rules listed there.
+    * status code = 4xx      -> allow all (even 401/403, as recommended by Google).
+    * status code = 2xx      -> parse body with `FromString` and apply rules listed there.
+    * other statuses (5xx)   -> disallow all, consider this a temporary unavailability.
 
 2. Query
 ^^^^^^^^
 
 Parsing robots.txt content builds a kind of logic database, which you can
-query with `(r *RobotsData) TestAgent(url, agent string) (bool, error)`.
+query with `(r *RobotsData) TestAgent(url, agent string) (bool)`.
 
 Explicit passing of agent is useful if you want to query for different agents. For single agent
-users there is a convenient option: `(r *RobotsData) Test(url) (bool, error)` which is
+users there is a convenient option: `(r *RobotsData) Test(url) (bool)` which is
 identical to `TestAgent`, but uses `r.DefaultAgent` as user agent for each query.
 
 Query parsed robots data with explicit user agent.
 
 ::
 
-    allow, err := robots.TestAgent("/", "FooBot")
-    if err != nil {
-        // robots.txt check error
-        return false, err
-    }
+    allow := robots.TestAgent("/", "FooBot")
 
 Or with implicit user agent.
 
 ::
 
     robots.DefaultAgent = "OtherBot"
-    allow, err := robots.Test("/")
-    if err != nil {
-        // robots.txt check error
-        return false, err
-    }
+    allow := robots.Test("/")
 
