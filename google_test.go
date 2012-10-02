@@ -3,6 +3,7 @@ package robotstxt
 import (
 	"strings"
 	"testing"
+	"time"
 )
 
 const (
@@ -89,11 +90,11 @@ func TestGroupOrder(t *testing.T) {
 	agents := []string{"Googlebot-News (Googlebot)", "Googlebot", "Googlebot-Image (Googlebot)", "Otherbot (web)", "Otherbot (News)"}
 	groups := []int{1, 3, 3, 2, 2}
 
-	if r, e := FromString(robots_case_order, false); e != nil {
+	if r, e := FromString(robots_case_order); e != nil {
 		t.Fatal(e)
 	} else {
 		for i, a := range agents {
-			g := r.findGroup(a)
+			g := r.FindGroup(a)
 			gi := getIndexInSlice(r.groups, g) + 1
 			if gi != groups[i] {
 				t.Fatalf("Expected agent %s to have group number %d, got %d.", a, groups[i], gi)
@@ -103,7 +104,7 @@ func TestGroupOrder(t *testing.T) {
 }
 
 func TestGrouping(t *testing.T) {
-	if r, e := FromString(robots_case_grouping, false); e != nil {
+	if r, e := FromString(robots_case_grouping); e != nil {
 		t.Fatal(e)
 	} else {
 		if len(r.groups) != 3 {
@@ -122,14 +123,14 @@ func TestGrouping(t *testing.T) {
 }
 
 func TestSitemaps(t *testing.T) {
-	if r, e := FromString(robots_case_sitemaps, false); e != nil {
+	if r, e := FromString(robots_case_sitemaps); e != nil {
 		t.Fatal(e)
 	} else {
-		if len(r.sitemaps) != 3 {
-			for i, s := range r.sitemaps {
+		if len(r.Sitemaps) != 3 {
+			for i, s := range r.Sitemaps {
 				t.Logf("Sitemap %d: %s", i, s)
 			}
-			t.Fatalf("Expected 3 sitemaps, got %d", len(r.sitemaps))
+			t.Fatalf("Expected 3 sitemaps, got %d", len(r.Sitemaps))
 		}
 		if len(r.groups) != 3 {
 			t.Fatalf("Expected 3 groups, got %d", len(r.groups))
@@ -138,26 +139,26 @@ func TestSitemaps(t *testing.T) {
 }
 
 func TestCrawlDelays(t *testing.T) {
-	if r, e := FromString(robots_case_delays, false); e != nil {
+	if r, e := FromString(robots_case_delays); e != nil {
 		t.Fatal(e)
 	} else {
-		if len(r.sitemaps) != 1 {
-			t.Fatalf("Expected 1 sitemaps, got %d", len(r.sitemaps))
+		if len(r.Sitemaps) != 1 {
+			t.Fatalf("Expected 1 sitemaps, got %d", len(r.Sitemaps))
 		}
 		if len(r.groups) != 3 {
 			t.Fatalf("Expected 3 groups, got %d", len(r.groups))
 		}
-		if r.groups[1].crawlDelay != 3.5 {
-			t.Fatalf("Expected crawl delay of 3.5 for group 2, got %f", r.groups[1].crawlDelay)
+		if r.groups[1].CrawlDelay != time.Duration(3.5*float64(time.Second)) {
+			t.Fatalf("Expected crawl delay of 3.5 for group 2, got %f", r.groups[1].CrawlDelay)
 		}
-		if r.groups[2].crawlDelay != 5 {
-			t.Fatalf("Expected crawl delay of 5 for group 3, got %f", r.groups[2].crawlDelay)
+		if r.groups[2].CrawlDelay != (5 * time.Second) {
+			t.Fatalf("Expected crawl delay of 5 for group 3, got %v", r.groups[2].CrawlDelay)
 		}
 	}
 }
 
 func TestWildcards(t *testing.T) {
-	if r, e := FromString(robots_case_wildcards, false); e != nil {
+	if r, e := FromString(robots_case_wildcards); e != nil {
 		t.Fatal(e)
 	} else {
 		if s := r.groups[0].rules[0].pattern.String(); s != "/path.*l$" {
@@ -243,7 +244,7 @@ func TestURLMatching(t *testing.T) {
 			"^/Fish.PHP",
 		},
 	}
-	if r, e := FromString(robots_case_matching, false); e != nil {
+	if r, e := FromString(robots_case_matching); e != nil {
 		t.Fatal(e)
 	} else {
 		for k, ar := range cases {
@@ -286,7 +287,7 @@ func TestURLPrecedence(t *testing.T) {
 			"/",
 		},
 	}
-	if r, e := FromString(robots_case_precedence, false); e != nil {
+	if r, e := FromString(robots_case_precedence); e != nil {
 		t.Fatal(e)
 	} else {
 		for k, ar := range cases {
@@ -303,7 +304,7 @@ func TestURLPrecedence(t *testing.T) {
 	}
 }
 
-func getIndexInSlice(ar []*group, g *group) int {
+func getIndexInSlice(ar []*Group, g *Group) int {
 	for i, v := range ar {
 		if v == g {
 			return i

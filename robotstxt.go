@@ -10,24 +10,26 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"regexp"
 	"strings"
+	"time"
 )
 
 type RobotsData struct {
-	DefaultAgent string
 	// private
-	groups      []*group
+	groups      []*Group
 	allowAll    bool
 	disallowAll bool
-	sitemaps    []string
+	Sitemaps    []string
 }
 
-type group struct {
+type Group struct {
 	agents     []string
 	rules      []*rule
-	crawlDelay float64
+	CrawlDelay time.Duration
 }
 
 type rule struct {
@@ -39,7 +41,7 @@ type rule struct {
 var allowAll = &RobotsData{allowAll: true}
 var disallowAll = &RobotsData{disallowAll: true}
 
-func FromResponseBytes(statusCode int, body []byte, print_errors bool) (*RobotsData, error) {
+func FromResponseBytes(statusCode int, body []byte) (*RobotsData, error) {
 	switch {
 	//
 	// From https://developers.google.com/webmasters/control-crawl-index/docs/robots_txt
@@ -51,7 +53,7 @@ func FromResponseBytes(statusCode int, body []byte, print_errors bool) (*RobotsD
 	case statusCode >= 400 && statusCode < 500:
 		return allowAll, nil
 	case statusCode >= 200 && statusCode < 300:
-		return FromBytes(body, print_errors)
+		return FromBytes(body)
 	}
 	// Conservative disallow all default
 	//
@@ -62,11 +64,23 @@ func FromResponseBytes(statusCode int, body []byte, print_errors bool) (*RobotsD
 	return disallowAll, nil
 }
 
-func FromResponse(statusCode int, body string, print_errors bool) (*RobotsData, error) {
-	return FromResponseBytes(statusCode, []byte(body), print_errors)
+func FromResponseContent(statusCode int, body string) (*RobotsData, error) {
+	return FromResponseBytes(statusCode, []byte(body))
 }
 
-func FromBytes(body []byte, print_errors bool) (r *RobotsData, err error) {
+func FromResponse(res *http.Response) (*RobotsData, error) {
+	if res == nil {
+		// Edge case, if res is nil, return nil data
+		return nil, nil
+	}
+	buf, e := ioutil.ReadAll(res.Body)
+	if e != nil {
+		return nil, e
+	}
+	return FromResponseBytes(res.StatusCode, buf)
+}
+
+func FromBytes(body []byte) (r *RobotsData, err error) {
 	var errs []error
 
 	// special case (probably not worth optimization?)
@@ -76,7 +90,7 @@ func FromBytes(body []byte, print_errors bool) (r *RobotsData, err error) {
 	}
 
 	sc := newByteScanner("bytes", false)
-	sc.Quiet = !print_errors
+	//sc.Quiet = !print_errors
 	sc.Feed(body, true)
 	var tokens []string
 	tokens, err = sc.ScanAll()
@@ -91,12 +105,11 @@ func FromBytes(body []byte, print_errors bool) (r *RobotsData, err error) {
 
 	r = &RobotsData{}
 	parser := newParser(tokens)
-	r.groups, r.sitemaps, errs = parser.parseAll()
+	r.groups, r.Sitemaps, errs = parser.parseAll()
 	if len(errs) > 0 {
-		if print_errors {
-			for _, e := range errs {
-				fmt.Fprintln(os.Stderr, e)
-			}
+		// TODO : Return error messages as a slice of messages on the error?
+		for _, e := range errs {
+			fmt.Fprintln(os.Stderr, e)
 		}
 		return nil, errors.New("Parse error. Use print_errors = true to print on stderr.")
 	}
@@ -104,12 +117,8 @@ func FromBytes(body []byte, print_errors bool) (r *RobotsData, err error) {
 	return r, nil
 }
 
-func FromString(body string, print_errors bool) (r *RobotsData, err error) {
-	return FromBytes([]byte(body), print_errors)
-}
-
-func (r *RobotsData) Test(path string) bool {
-	return r.TestAgent(path, r.DefaultAgent)
+func FromString(body string) (r *RobotsData, err error) {
+	return FromBytes([]byte(body))
 }
 
 func (r *RobotsData) TestAgent(path, agent string) bool {
@@ -123,7 +132,7 @@ func (r *RobotsData) TestAgent(path, agent string) bool {
 	// Find a group of rules that applies to this agent
 	// From google's spec:
 	// The user-agent is non-case-sensitive.
-	if g := r.findGroup(agent); g != nil {
+	if g := r.FindGroup(agent); g != nil {
 		// Find a rule that applies to this url
 		if r := g.findRule(path); r != nil {
 			return r.allow
@@ -141,7 +150,7 @@ func (r *RobotsData) TestAgent(path, agent string) bool {
 // with the most specific user-agent that still matches. All other groups of
 // records are ignored by the crawler. The user-agent is non-case-sensitive.
 // The order of the groups within the robots.txt file is irrelevant.
-func (r *RobotsData) findGroup(agent string) (ret *group) {
+func (r *RobotsData) FindGroup(agent string) (ret *Group) {
 	var prefixLen int
 
 	agent = strings.ToLower(agent)
@@ -162,6 +171,14 @@ func (r *RobotsData) findGroup(agent string) (ret *group) {
 	return
 }
 
+func (g *Group) Test(path string) bool {
+	if r := g.findRule(path); r != nil {
+		return r.allow
+	}
+
+	return true
+}
+
 // From google's spec:
 // The path value is used as a basis to determine whether or not a rule applies
 // to a specific URL on a site. With the exception of wildcards, the path is
@@ -172,7 +189,7 @@ func (r *RobotsData) findGroup(agent string) (ret *group) {
 // the most specific rule based on the length of the [path] entry will trump
 // the less specific (shorter) rule. The order of precedence for rules with
 // wildcards is undefined.
-func (g *group) findRule(path string) (ret *rule) {
+func (g *Group) findRule(path string) (ret *rule) {
 	var prefixLen int
 
 	for _, r := range g.rules {

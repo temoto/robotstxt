@@ -13,6 +13,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type lineType uint
@@ -44,8 +45,8 @@ func newParser(tokens []string) *parser {
 	return &parser{tokens: tokens}
 }
 
-func (p *parser) parseAll() (groups []*group, sitemaps []string, errs []error) {
-	var curGroup *group
+func (p *parser) parseAll() (groups []*Group, sitemaps []string, errs []error) {
+	var curGroup *Group
 	var isEmptyGroup bool
 
 	// Reset internal fields, tokens are assigned at creation time, never change
@@ -74,7 +75,7 @@ func (p *parser) parseAll() (groups []*group, sitemaps []string, errs []error) {
 					curGroup = nil
 				}
 				if curGroup == nil {
-					curGroup = new(group)
+					curGroup = new(Group)
 					isEmptyGroup = true
 				}
 				// Add the user agent
@@ -114,7 +115,7 @@ func (p *parser) parseAll() (groups []*group, sitemaps []string, errs []error) {
 					errs = append(errs, errors.New(fmt.Sprintf("Crawl-delay before User-agent at token #%d.", p.pos)))
 				} else {
 					isEmptyGroup = false
-					curGroup.crawlDelay = li.vf
+					curGroup.CrawlDelay = time.Duration(li.vf * float64(time.Second))
 				}
 			}
 		}

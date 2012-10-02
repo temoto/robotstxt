@@ -5,16 +5,16 @@ import (
 )
 
 func TestFromResponseBasic(t *testing.T) {
-	if _, err := FromResponse(200, "", true); err != nil {
+	if _, err := FromResponseContent(200, ""); err != nil {
 		t.Fatal("FromResponse MUST accept 200/\"\"")
 	}
-	if _, err := FromResponse(401, "", true); err != nil {
+	if _, err := FromResponseContent(401, ""); err != nil {
 		t.Fatal("FromResponse MUST accept 401/\"\"")
 	}
-	if _, err := FromResponse(403, "", true); err != nil {
+	if _, err := FromResponseContent(403, ""); err != nil {
 		t.Fatal("FromResponse MUST accept 403/\"\"")
 	}
-	if _, err := FromResponse(404, "", true); err != nil {
+	if _, err := FromResponseContent(404, ""); err != nil {
 		t.Fatal("FromResponse MUST accept 404/\"\"")
 	}
 }
@@ -37,41 +37,41 @@ func ExpectDisallow(r *RobotsData, t *testing.T, msg string) {
 }
 
 func TestResponse401(t *testing.T) {
-	r, _ := FromResponse(401, "", true)
+	r, _ := FromResponseContent(401, "")
 	ExpectAllow(r, t, "FromResponse(401, \"\") MUST allow everything.")
 }
 
 func TestResponse403(t *testing.T) {
-	r, _ := FromResponse(403, "", true)
+	r, _ := FromResponseContent(403, "")
 	ExpectAllow(r, t, "FromResponse(403, \"\") MUST allow everything.")
 }
 
 func TestResponse404(t *testing.T) {
-	r, _ := FromResponse(404, "", true)
+	r, _ := FromResponseContent(404, "")
 	ExpectAllow(r, t, "FromResponse(404, \"\") MUST allow everything.")
 }
 
 func TestFromStringBasic(t *testing.T) {
-	if _, err := FromString("", true); err != nil {
+	if _, err := FromString(""); err != nil {
 		t.Fatal("FromString MUST accept \"\"")
 	}
 }
 
 func TestFromStringEmpty(t *testing.T) {
-	r, _ := FromString("", true)
+	r, _ := FromString("")
 	if allow := r.TestAgent("/", "Somebot"); !allow {
 		t.Fatal("FromString(\"\") MUST allow everything.")
 	}
 }
 
 func TestFromStringComment(t *testing.T) {
-	if _, err := FromString("# comment", true); err != nil {
+	if _, err := FromString("# comment"); err != nil {
 		t.Fatal("FromString MUST accept \"# comment\"")
 	}
 }
 
 func TestFromString001(t *testing.T) {
-	r, err := FromString("User-Agent: *\r\nDisallow: /\r\n", true)
+	r, err := FromString("User-Agent: *\r\nDisallow: /\r\n")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -82,7 +82,7 @@ func TestFromString001(t *testing.T) {
 }
 
 func TestFromString002(t *testing.T) {
-	r, err := FromString("User-Agent: *\r\nDisallow: /account\r\n", true)
+	r, err := FromString("User-Agent: *\r\nDisallow: /account\r\n")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -95,7 +95,7 @@ func TestFromString002(t *testing.T) {
 const robots_text_001 = "User-agent: * \nDisallow: /administrator/\nDisallow: /cache/\nDisallow: /components/\nDisallow: /editor/\nDisallow: /forum/\nDisallow: /help/\nDisallow: /images/\nDisallow: /includes/\nDisallow: /language/\nDisallow: /mambots/\nDisallow: /media/\nDisallow: /modules/\nDisallow: /templates/\nDisallow: /installation/\nDisallow: /getcid/\nDisallow: /tooltip/\nDisallow: /getuser/\nDisallow: /download/\nDisallow: /index.php?option=com_phorum*,quote=1\nDisallow: /index.php?option=com_phorum*phorum_query=search\nDisallow: /index.php?option=com_phorum*,newer\nDisallow: /index.php?option=com_phorum*,older\n\nUser-agent: Yandex\nAllow: /\nSitemap: http://www.pravorulya.com/sitemap.xml\nSitemap: http://www.pravorulya.com/sitemap1.xml"
 
 func TestFromString003(t *testing.T) {
-	r, err := FromString(robots_text_001, true)
+	r, err := FromString(robots_text_001)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -106,7 +106,7 @@ func TestFromString003(t *testing.T) {
 }
 
 func TestFromString004(t *testing.T) {
-	r, err := FromString(robots_text_001, true)
+	r, err := FromString(robots_text_001)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -118,7 +118,7 @@ func TestFromString004(t *testing.T) {
 
 func TestInvalidEncoding(t *testing.T) {
 	// Invalid UTF-8 encoding should not break parser.
-	_, err := FromString("User-agent: H\xef\xbf\xbdm�h�kki\nDisallow: *", true)
+	_, err := FromString("User-agent: H\xef\xbf\xbdm�h�kki\nDisallow: *")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -129,7 +129,7 @@ const robots_text_002 = ("User-agent: *\nDisallow: /search\nDisallow: /groups\nD
 	"Disallow: /cl2/ical/\nDisallow: /coop/directory\nDisallow: /coop/manage\nDisallow: /trends?\nDisallow: /trends/music?\nDisallow: /trends/hottrends?\nDisallow: /trends/viz?\nDisallow: /notebook/search?\nDisallow: /musica\nDisallow: /musicad\nDisallow: /musicas\nDisallow: /musicl\nDisallow: /musics\nDisallow: /musicsearch\nDisallow: /musicsp\nDisallow: /musiclp\nDisallow: /browsersync\nDisallow: /call\nDisallow: /archivesearch?\nDisallow: /archivesearch/url\nDisallow: /archivesearch/advanced_search\nDisallow: /base/reportbadoffer\nDisallow: /urchin_test/\nDisallow: /movies?\nDisallow: /codesearch?\nDisallow: /codesearch/feeds/search?\nDisallow: /wapsearch?\nDisallow: /safebrowsing\nAllow: /safebrowsing/diagnostic\nAllow: /safebrowsing/report_error/\nAllow: /safebrowsing/report_phish/\nDisallow: /reviews/search?\nDisallow: /orkut/albums\nAllow: /jsapi\nDisallow: /views?\nDisallow: /c/\nDisallow: /cbk\nDisallow: /recharge/dashboard/car\nDisallow: /recharge/dashboard/static/\nDisallow: /translate_a/\nDisallow: /translate_c\nDisallow: /translate_f\nDisallow: /translate_static/\nDisallow: /translate_suggestion\nDisallow: /profiles/me\nAllow: /profiles\nDisallow: /s2/profiles/me\nAllow: /s2/profiles\nAllow: /s2/photos\nAllow: /s2/static\nDisallow: /s2\nDisallow: /transconsole/portal/\nDisallow: /gcc/\nDisallow: /aclk\nDisallow: /cse?\nDisallow: /cse/home\nDisallow: /cse/panel\nDisallow: /cse/manage\nDisallow: /tbproxy/\nDisallow: /imesync/\nDisallow: /shenghuo/search?\nDisallow: /support/forum/search?\nDisallow: /reviews/polls/\nDisallow: /hosted/images/\nDisallow: /ppob/?\nDisallow: /ppob?\nDisallow: /ig/add?\nDisallow: /adwordsresellers\nDisallow: /accounts/o8\nAllow: /accounts/o8/id\nDisallow: /topicsearch?q=\nDisallow: /xfx7/\nDisallow: /squared/api\nDisallow: /squared/search\nDisallow: /squared/table\nDisallow: /toolkit/\nAllow: /toolkit/*.html\nDisallow: /globalmarketfinder/\nAllow: /globalmarketfinder/*.html\nDisallow: /qnasearch?\nDisallow: /errors/\nDisallow: /app/updates\nDisallow: /sidewiki/entry/\nDisallow: /quality_form?\nDisallow: /labs/popgadget/search\nDisallow: /buzz/post\nDisallow: /compressiontest/\nDisallow: /analytics/reporting/\nDisallow: /analytics/admin/\nDisallow: /analytics/web/\nDisallow: /analytics/feeds/\nDisallow: /analytics/settings/\nDisallow: /alerts/\nDisallow: /phone/compare/?\nAllow: /alerts/manage\nSitemap: http://www.gstatic.com/s2/sitemaps/profiles-sitemap.xml\nSitemap: http://www.google.com/hostednews/sitemap_index.xml\nSitemap: http://www.google.com/ventures/sitemap_ventures.xml\nSitemap: http://www.google.com/sitemaps_webmasters.xml\nSitemap: http://www.gstatic.com/trends/websites/sitemaps/sitemapindex.xml\nSitemap: http://www.gstatic.com/dictionary/static/sitemaps/sitemap_index.xml")
 
 func TestFromString005(t *testing.T) {
-	r, err := FromString(robots_text_002, true)
+	r, err := FromString(robots_text_002)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -137,7 +137,7 @@ func TestFromString005(t *testing.T) {
 }
 
 func TestFromString006(t *testing.T) {
-	r, err := FromString(robots_text_002, true)
+	r, err := FromString(robots_text_002)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -150,7 +150,7 @@ func TestFromString006(t *testing.T) {
 const robots_text_003 = "User-Agent: * \nAllow: /"
 
 func TestFromString007(t *testing.T) {
-	r, err := FromString(robots_text_003, true)
+	r, err := FromString(robots_text_003)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -163,7 +163,7 @@ func TestFromString007(t *testing.T) {
 const robots_text_004 = "User-Agent: * \nDisallow: "
 
 func TestFromString008(t *testing.T) {
-	r, err := FromString(robots_text_004, true)
+	r, err := FromString(robots_text_004)
 	if err != nil {
 		t.Log(robots_text_004)
 		t.Fatal(err.Error())
@@ -180,7 +180,7 @@ User-agent: *
 Disallow: /`
 
 func TestRobotstxtOrgCase1(t *testing.T) {
-	if r, err := FromString(robots_text_005, false); err != nil {
+	if r, err := FromString(robots_text_005); err != nil {
 		t.Fatal(err.Error())
 	} else if allow := r.TestAgent("/path/page1.html", "SomeBot"); allow {
 		t.Fatal("Must disallow.")
@@ -188,7 +188,7 @@ func TestRobotstxtOrgCase1(t *testing.T) {
 }
 
 func TestRobotstxtOrgCase2(t *testing.T) {
-	if r, err := FromString(robots_text_005, false); err != nil {
+	if r, err := FromString(robots_text_005); err != nil {
 		t.Fatal(err.Error())
 	} else if allow := r.TestAgent("/path/page1.html", "Googlebot"); !allow {
 		t.Fatal("Must allow.")
@@ -197,20 +197,20 @@ func TestRobotstxtOrgCase2(t *testing.T) {
 
 func BenchmarkParseFromString001(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		FromString(robots_text_001, false)
+		FromString(robots_text_001)
 		b.SetBytes(int64(len(robots_text_001)))
 	}
 }
 
 func BenchmarkParseFromString002(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		FromString(robots_text_002, false)
+		FromString(robots_text_002)
 		b.SetBytes(int64(len(robots_text_002)))
 	}
 }
 
 func BenchmarkParseFromResponse401(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		FromResponse(401, "", false)
+		FromResponseContent(401, "")
 	}
 }
