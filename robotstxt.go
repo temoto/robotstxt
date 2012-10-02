@@ -8,11 +8,8 @@ package robotstxt
 
 import (
 	"bytes"
-	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -38,6 +35,24 @@ type rule struct {
 	pattern *regexp.Regexp
 }
 
+type ParseError struct {
+	Errs []error
+}
+
+func newParseError(errs []error) *ParseError {
+	return &ParseError{errs}
+}
+
+func (e ParseError) Error() string {
+	var b bytes.Buffer
+
+	b.WriteString("Parse error(s): " + "\n")
+	for _, er := range e.Errs {
+		b.WriteString(er.Error() + "\n")
+	}
+	return b.String()
+}
+
 var allowAll = &RobotsData{allowAll: true}
 var disallowAll = &RobotsData{disallowAll: true}
 
@@ -57,8 +72,7 @@ func FromResponseBytes(statusCode int, body []byte) (*RobotsData, error) {
 	}
 	// Conservative disallow all default
 	//
-	// From https://developers.google.com/webmasters/control-crawl-index/docs/robots_txt
-	//
+	// From google's spec:
 	// Server errors (5xx) are seen as temporary errors that result in a "full
 	// disallow" of crawling.
 	return disallowAll, nil
@@ -107,11 +121,7 @@ func FromBytes(body []byte) (r *RobotsData, err error) {
 	parser := newParser(tokens)
 	r.groups, r.Sitemaps, errs = parser.parseAll()
 	if len(errs) > 0 {
-		// TODO : Return error messages as a slice of messages on the error?
-		for _, e := range errs {
-			fmt.Fprintln(os.Stderr, e)
-		}
-		return nil, errors.New("Parse error. Use print_errors = true to print on stderr.")
+		return nil, newParseError(errs)
 	}
 
 	return r, nil
@@ -176,6 +186,7 @@ func (g *Group) Test(path string) bool {
 		return r.allow
 	}
 
+	// When no rule applies, allow by default
 	return true
 }
 

@@ -195,6 +195,22 @@ func TestRobotstxtOrgCase2(t *testing.T) {
 	}
 }
 
+const robots_text_errs = `Disallow: /
+User-agent: Google
+Crawl-delay: fail`
+
+func TestParseErrors(t *testing.T) {
+	if _, err := FromString(robots_text_errs); err == nil {
+		t.Fatal("Expected error.")
+	} else {
+		if pe, ok := err.(*ParseError); !ok {
+			t.Fatal("Expected ParseError.")
+		} else if len(pe.Errs) != 2 {
+			t.Fatalf("Expected 2 errors, got %d.", len(pe.Errs))
+		}
+	}
+}
+
 func BenchmarkParseFromString001(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		FromString(robots_text_001)
