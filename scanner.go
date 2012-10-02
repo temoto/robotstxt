@@ -5,7 +5,6 @@ import (
     "go/token"
     "io"
     "os"
-    "strings"
     "unicode/utf8"
 )
 
@@ -21,7 +20,7 @@ type ByteScanner struct {
     //state string
 }
 
-const WhitespaceChars = " \t\v"
+var WhitespaceChars = []rune{' ', '\t', '\v'}
 
 func NewByteScanner(srcname string, quiet bool) *ByteScanner {
     return &ByteScanner{
@@ -50,9 +49,10 @@ func (s *ByteScanner) GetPosition() token.Position {
 func (s *ByteScanner) Scan() (string, error) {
     //println("--- Scan(). Offset / len(s.buf): ", s.pos.Offset, len(s.buf))
 
+    bufsize := len(s.buf)
     for {
         // Note Offset > len, not >=, so we can Scan last character.
-        if s.lastChunk && s.pos.Offset > len(s.buf) {
+        if s.lastChunk && s.pos.Offset > bufsize {
             return "", io.EOF
         }
 
@@ -137,7 +137,12 @@ func (s *ByteScanner) isEol() bool {
 }
 
 func (s *ByteScanner) isSpace() bool {
-    return strings.Index(WhitespaceChars, string(s.ch)) >= 0
+    for i, _ := range WhitespaceChars {
+        if s.ch == WhitespaceChars[i] {
+            return true
+        }
+    }
+    return false
 }
 
 func (s *ByteScanner) skipSpace() {
