@@ -4,18 +4,18 @@ import (
 	"testing"
 )
 
-func TestFromResponseBasic(t *testing.T) {
-	if _, err := FromResponseContent(200, ""); err != nil {
-		t.Fatal("FromResponse MUST accept 200/\"\"")
+func TestFromStatusAndStringBasic(t *testing.T) {
+	if _, err := FromStatusAndString(200, ""); err != nil {
+		t.Fatal("FromStatusAndString MUST accept 200/\"\"")
 	}
-	if _, err := FromResponseContent(401, ""); err != nil {
-		t.Fatal("FromResponse MUST accept 401/\"\"")
+	if _, err := FromStatusAndString(401, ""); err != nil {
+		t.Fatal("FromStatusAndString MUST accept 401/\"\"")
 	}
-	if _, err := FromResponseContent(403, ""); err != nil {
-		t.Fatal("FromResponse MUST accept 403/\"\"")
+	if _, err := FromStatusAndString(403, ""); err != nil {
+		t.Fatal("FromStatusAndString MUST accept 403/\"\"")
 	}
-	if _, err := FromResponseContent(404, ""); err != nil {
-		t.Fatal("FromResponse MUST accept 404/\"\"")
+	if _, err := FromStatusAndString(404, ""); err != nil {
+		t.Fatal("FromStatusAndString MUST accept 404/\"\"")
 	}
 }
 
@@ -36,19 +36,19 @@ func ExpectDisallow(r *RobotsData, t *testing.T, msg string) {
 	}
 }
 
-func TestResponse401(t *testing.T) {
-	r, _ := FromResponseContent(401, "")
-	ExpectAllow(r, t, "FromResponse(401, \"\") MUST allow everything.")
+func TestStatus401(t *testing.T) {
+	r, _ := FromStatusAndString(401, "")
+	ExpectAllow(r, t, "FromStatusAndString(401, \"\") MUST allow everything.")
 }
 
-func TestResponse403(t *testing.T) {
-	r, _ := FromResponseContent(403, "")
-	ExpectAllow(r, t, "FromResponse(403, \"\") MUST allow everything.")
+func TestStatus403(t *testing.T) {
+	r, _ := FromStatusAndString(403, "")
+	ExpectAllow(r, t, "FromStatusAndString(403, \"\") MUST allow everything.")
 }
 
-func TestResponse404(t *testing.T) {
-	r, _ := FromResponseContent(404, "")
-	ExpectAllow(r, t, "FromResponse(404, \"\") MUST allow everything.")
+func TestStatus404(t *testing.T) {
+	r, _ := FromStatusAndString(404, "")
+	ExpectAllow(r, t, "FromStatusAndString(404, \"\") MUST allow everything.")
 }
 
 func TestFromStringBasic(t *testing.T) {
@@ -225,8 +225,8 @@ func BenchmarkParseFromString002(b *testing.B) {
 	}
 }
 
-func BenchmarkParseFromResponse401(b *testing.B) {
+func BenchmarkParseFromStatus401(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		FromResponseContent(401, "")
+		FromStatusAndString(401, "")
 	}
 }

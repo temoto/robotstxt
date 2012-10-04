@@ -13,28 +13,43 @@ To build and run tests run `go test` in source directory.
 Usage
 =====
 
+As usual, no special installation is required, just
+
+    import "github.com/temoto/robotstxt.go"
+
+run `go get` and you're ready.
+
 1. Parse
 ^^^^^^^^
 
 First of all, you need to parse robots.txt data. You can do it with
-function `FromString(body string) (*RobotsData, error)`::
+functions `FromBytes(body []byte) (*RobotsData, error)` or same for `string`::
 
+    robots, err := robotstxt.FromBytes([]byte("User-agent: *\nDisallow:"))
     robots, err := robotstxt.FromString("User-agent: *\nDisallow:")
 
-There is a convenient function `FromResponse(statusCode int, body string) (*RobotsData, error)`
-to init robots data from HTTP response status code and body::
+As of 2012-10-03, `FromBytes` is the most efficient method, everything else
+is a wrapper for this core function.
 
-    robots, err := robotstxt.FromResponse(resp.StatusCode, resp.Body)
+There are few convenient constructors for various purposes:
+
+* `FromResponse(*http.Response) (*RobotsData, error)` to init robots data
+from HTTP response. It *does not* call `response.Body.Close()`::
+
+    robots, err := robotstxt.FromResponse(resp)
+    resp.Body.Close()
     if err != nil {
-        // robots.txt parse error
-        return false, err
+        log.Println("Error parsing robots.txt:", err.Error())
     }
 
-Passing status code applies following logic in line with google's interpretation of robots.txt files:
+* `FromStatusAndBytes(statusCode int, body []byte) (*RobotsData, error)` or
+`FromStatusAndString` if you prefer to read bytes (string) yourself.
+Passing status code applies following logic in line with Google's interpretation
+of robots.txt files:
 
-    * status code = 4xx      -> allow all (even 401/403, as recommended by Google).
-    * status code = 2xx      -> parse body with `FromString` and apply rules listed there.
-    * other statuses (5xx)   -> disallow all, consider this a temporary unavailability.
+    * status 2xx  -> parse body with `FromBytes` and apply rules listed there.
+    * status 4xx  -> allow all (even 401/403, as recommended by Google).
+    * other (5xx) -> disallow all, consider this a temporary unavailability.
 
 2. Query
 ^^^^^^^^
@@ -42,20 +57,33 @@ Passing status code applies following logic in line with google's interpretation
 Parsing robots.txt content builds a kind of logic database, which you can
 query with `(r *RobotsData) TestAgent(url, agent string) (bool)`.
 
-Explicit passing of agent is useful if you want to query for different agents. For single agent
-users there is a convenient option: `(r *RobotsData) Test(url) (bool)` which is
-identical to `TestAgent`, but uses `r.DefaultAgent` as user agent for each query.
+Explicit passing of agent is useful if you want to query for different agents. For
+single agent users there is an efficient option: `RobotsData.FindGroup(userAgent string)`
+returns a structure with `.Test(path string)` method and `.CrawlDelay time.Duration`.
 
-Query parsed robots data with explicit user agent.
+Simple query with explicit user agent. Each call will scan all rules.
 
 ::
 
     allow := robots.TestAgent("/", "FooBot")
 
-Or with implicit user agent.
+Or query several paths against same user agent for performance.
 
 ::
 
-    robots.DefaultAgent = "OtherBot"
-    allow := robots.Test("/")
+    group := robots.FindGroup("BarBot")
+    group.Test("/")
+    group.Test("/download.mp3")
+    group.Test("/news/article-2012-1")
 
+
+Who
+===
+
+Honorable contributors (in undefined order):
+
+    * Ilya Grigorik (igrigorik)
+    * Martin Angers (PuerkitoBio)
+    * Micha Gorelick (mynameisfiber)
+
+Initial commit and other: Sergey Shepelev temotor@gmail.com

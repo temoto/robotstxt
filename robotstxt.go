@@ -3,14 +3,16 @@
 // with various extensions.
 package robotstxt
 
-// Comments explaining the logic are taken from either the google's spec:
+// Comments explaining the logic are taken from either the Google's spec:
 // https://developers.google.com/webmasters/control-crawl-index/docs/robots_txt
 
 import (
 	"bytes"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -56,9 +58,11 @@ func (e ParseError) Error() string {
 var allowAll = &RobotsData{allowAll: true}
 var disallowAll = &RobotsData{disallowAll: true}
 
-func FromResponseBytes(statusCode int, body []byte) (*RobotsData, error) {
+func FromStatusAndBytes(statusCode int, body []byte) (*RobotsData, error) {
 	switch {
-	//
+	case statusCode >= 200 && statusCode < 300:
+		return FromBytes(body)
+
 	// From https://developers.google.com/webmasters/control-crawl-index/docs/robots_txt
 	//
 	// Google treats all 4xx errors in the same way and assumes that no valid
@@ -67,19 +71,19 @@ func FromResponseBytes(statusCode int, body []byte) (*RobotsData, error) {
 	// "Unauthorized" and 403 "Forbidden" HTTP result codes.
 	case statusCode >= 400 && statusCode < 500:
 		return allowAll, nil
-	case statusCode >= 200 && statusCode < 300:
-		return FromBytes(body)
-	}
-	// Conservative disallow all default
-	//
-	// From google's spec:
+
+	// From Google's spec:
 	// Server errors (5xx) are seen as temporary errors that result in a "full
 	// disallow" of crawling.
-	return disallowAll, nil
+	case statusCode >= 500 && statusCode < 600:
+		return disallowAll, nil
+	}
+
+	return nil, errors.New("Unexpected status: " + strconv.FormatInt(int64(statusCode), 10))
 }
 
-func FromResponseContent(statusCode int, body string) (*RobotsData, error) {
-	return FromResponseBytes(statusCode, []byte(body))
+func FromStatusAndString(statusCode int, body string) (*RobotsData, error) {
+	return FromStatusAndBytes(statusCode, []byte(body))
 }
 
 func FromResponse(res *http.Response) (*RobotsData, error) {
@@ -91,7 +95,7 @@ func FromResponse(res *http.Response) (*RobotsData, error) {
 	if e != nil {
 		return nil, e
 	}
-	return FromResponseBytes(res.StatusCode, buf)
+	return FromStatusAndBytes(res.StatusCode, buf)
 }
 
 func FromBytes(body []byte) (r *RobotsData, err error) {
@@ -140,7 +144,7 @@ func (r *RobotsData) TestAgent(path, agent string) bool {
 	}
 
 	// Find a group of rules that applies to this agent
-	// From google's spec:
+	// From Google's spec:
 	// The user-agent is non-case-sensitive.
 	if g := r.FindGroup(agent); g != nil {
 		// Find a rule that applies to this url
@@ -149,12 +153,12 @@ func (r *RobotsData) TestAgent(path, agent string) bool {
 		}
 	}
 
-	// From google's spec:
-	// By default, there are no restrictions for crawling for the designated crawlers. 
+	// From Google's spec:
+	// By default, there are no restrictions for crawling for the designated crawlers.
 	return true
 }
 
-// From google's spec:
+// From Google's spec:
 // Only one group of group-member records is valid for a particular crawler.
 // The crawler must determine the correct group of records by finding the group
 // with the most specific user-agent that still matches. All other groups of
@@ -190,7 +194,7 @@ func (g *Group) Test(path string) bool {
 	return true
 }
 
-// From google's spec:
+// From Google's spec:
 // The path value is used as a basis to determine whether or not a rule applies
 // to a specific URL on a site. With the exception of wildcards, the path is
 // used to match the beginning of a URL (and any valid URLs that start with the
@@ -207,7 +211,7 @@ func (g *Group) findRule(path string) (ret *rule) {
 		if r.pattern != nil {
 			if r.pattern.MatchString(path) {
 				// Consider this a match equal to the length of the pattern.
-				// From google's spec:
+				// From Google's spec:
 				// The order of precedence for rules with wildcards is undefined.
 				if l := len(r.pattern.String()); l > prefixLen {
 					prefixLen = len(r.pattern.String())
