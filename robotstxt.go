@@ -57,6 +57,7 @@ func (e ParseError) Error() string {
 
 var allowAll = &RobotsData{allowAll: true}
 var disallowAll = &RobotsData{disallowAll: true}
+var emptyGroup = &Group{}
 
 func FromStatusAndBytes(statusCode int, body []byte) (*RobotsData, error) {
 	switch {
@@ -181,6 +182,10 @@ func (r *RobotsData) FindGroup(agent string) (ret *Group) {
 				}
 			}
 		}
+	}
+
+	if ret == nil {
+		return emptyGroup
 	}
 	return
 }

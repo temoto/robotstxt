@@ -211,6 +211,27 @@ func TestParseErrors(t *testing.T) {
 	}
 }
 
+const robots_text_just_html = `<!DOCTYPE html>
+<html>
+<title></title>
+<p>Hello world! This is valid HTML but invalid robots.txt.`
+
+func TestHtmlInstead(t *testing.T) {
+	r, err := FromString(robots_text_just_html)
+	if err != nil {
+		// According to Google spec, invalid robots.txt file
+		// must be parsed silently.
+		t.Fatal(err.Error())
+	}
+	group := r.FindGroup("SuperBot")
+	if group == nil {
+		t.Fatal("Group must not be nil.")
+	}
+	if !group.Test("/") {
+		t.Fatal("Must allow by default.")
+	}
+}
+
 func BenchmarkParseFromString001(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		FromString(robots_text_001)
