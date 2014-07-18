@@ -108,7 +108,7 @@ func FromBytes(body []byte) (r *RobotsData, err error) {
 		return allowAll, nil
 	}
 
-	sc := newByteScanner("bytes", false)
+	sc := newByteScanner("bytes", true)
 	//sc.Quiet = !print_errors
 	sc.Feed(body, true)
 	var tokens []string
