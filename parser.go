@@ -157,7 +157,7 @@ func (p *parser) parseLine() (li *lineInfo, err error) {
 	returnPathVal := func(t lineType) (*lineInfo, error) {
 		p.popToken()
 		if t2 != "" {
-			if !strings.HasPrefix(t2, "/") {
+			if !strings.HasPrefix(t2, "*") && !strings.HasPrefix(t2, "/") {
 				t2 = "/" + t2
 			}
 			if strings.HasSuffix(t2, "*") {

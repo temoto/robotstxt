@@ -232,6 +232,32 @@ func TestHtmlInstead(t *testing.T) {
 	}
 }
 
+// http://perche.vanityfair.it/robots.txt on Sat, 13 Sep 2014 23:00:29 GMT
+const robots_text_bom = "\xef\xbb\xbfUser-agent: *\nDisallow: */oroscopo-di-oggi/*"
+
+func TestUnicodeBOM(t *testing.T) {
+	_, err := FromString(robots_text_bom)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+}
+
+func TestWildcardPrefix(t *testing.T) {
+	r, err := FromString(robots_text_bom)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if !r.TestAgent("/foo/bar", "WildcardBot") {
+		t.Fatal("Must allow /foo/bar")
+	}
+	if r.TestAgent("/oroscopo-di-oggi/bar", "WildcardBot") {
+		t.Fatal("Must not allow /oroscopo-di-oggi/bar")
+	}
+	if r.TestAgent("/foo/oroscopo-di-oggi/bar", "WildcardBot") {
+		t.Fatal("Must not allow /foo/oroscopo-di-oggi/bar")
+	}
+}
+
 func BenchmarkParseFromString001(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		FromString(robots_text_001)

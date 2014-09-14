@@ -35,8 +35,16 @@ func (s *byteScanner) Feed(input []byte, end bool) (bool, error) {
 	s.pos.Line = 1
 	s.pos.Column = 1
 	s.lastChunk = end
+
 	// Read first char into look-ahead buffer `s.ch`.
 	s.nextChar()
+
+	// Skip UTF-8 byte order mark
+	if s.ch == 65279 {
+		s.nextChar()
+		s.pos.Column = 1
+	}
+
 	return false, nil
 }
 
@@ -186,6 +194,7 @@ func (s *byteScanner) nextChar() (rune, error) {
 			s.error(s.pos, "illegal UTF-8 encoding")
 		}
 	}
+	s.pos.Column++
 	s.pos.Offset += w
 	s.ch = r
 	return s.ch, nil
