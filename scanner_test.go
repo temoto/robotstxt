@@ -79,3 +79,18 @@ func TestScan007(t *testing.T) {
 		t.Fatal("Wrong tokens read:", strconv.Quote(tokens[0]), strconv.Quote(tokens[1]), strconv.Quote(tokens[2]), strconv.Quote(tokens[3]))
 	}
 }
+
+func TestScanUnicode8BOM(t *testing.T) {
+	sc := newByteScanner("test-bom", false)
+	sc.Feed([]byte(robots_text_vanityfair), true)
+	tokens, err := sc.ScanAll()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if len(tokens) == 0 {
+		t.Fatal("Read zero tokens.")
+	}
+	if tokens[0] != "User-agent" {
+		t.Fatal("Expecting first token: User-agent")
+	}
+}

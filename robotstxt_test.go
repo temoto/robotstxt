@@ -233,17 +233,10 @@ func TestHtmlInstead(t *testing.T) {
 }
 
 // http://perche.vanityfair.it/robots.txt on Sat, 13 Sep 2014 23:00:29 GMT
-const robots_text_bom = "\xef\xbb\xbfUser-agent: *\nDisallow: */oroscopo-di-oggi/*"
-
-func TestUnicodeBOM(t *testing.T) {
-	_, err := FromString(robots_text_bom)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-}
+const robots_text_vanityfair = "\xef\xbb\xbfUser-agent: *\nDisallow: */oroscopo-di-oggi/*"
 
 func TestWildcardPrefix(t *testing.T) {
-	r, err := FromString(robots_text_bom)
+	r, err := FromString(robots_text_vanityfair)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
