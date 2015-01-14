@@ -149,13 +149,8 @@ func (r *RobotsData) TestAgent(path, agent string) bool {
 	// The user-agent is non-case-sensitive.
 	if g := r.FindGroup(agent); g != nil {
 		// Find a rule that applies to this url
-		if r := g.findRule(path); r != nil {
-			return r.allow
-		}
+		return g.Test(path)
 	}
-
-	// From Google's spec:
-	// By default, there are no restrictions for crawling for the designated crawlers.
 	return true
 }
 
@@ -195,7 +190,8 @@ func (g *Group) Test(path string) bool {
 		return r.allow
 	}
 
-	// When no rule applies, allow by default
+	// From Google's spec:
+	// By default, there are no restrictions for crawling for the designated crawlers.
 	return true
 }
 
