@@ -26,6 +26,7 @@ const (
 	lDisallow
 	lCrawlDelay
 	lSitemap
+	lHost
 )
 
 type parser struct {
@@ -45,7 +46,7 @@ func newParser(tokens []string) *parser {
 	return &parser{tokens: tokens}
 }
 
-func (p *parser) parseAll() (groups []*Group, sitemaps []string, errs []error) {
+func (p *parser) parseAll() (groups []*Group, host string, sitemaps []string, errs []error) {
 	var curGroup *Group
 	var isEmptyGroup bool
 
@@ -106,6 +107,9 @@ func (p *parser) parseAll() (groups []*Group, sitemaps []string, errs []error) {
 						curGroup.rules = append(curGroup.rules, &rule{li.vs, true, nil})
 					}
 				}
+				
+			case lHost:
+				host = li.vs
 
 			case lSitemap:
 				sitemaps = append(sitemaps, li.vs)
@@ -212,6 +216,11 @@ func (p *parser) parseLine() (li *lineInfo, err error) {
 		// From google's spec:
 		// When no path is specified, the directive is ignored.
 		return returnPathVal(lAllow)
+
+	case "host":
+		// Host directive to specify main site mirror 
+		// Read more: https://help.yandex.com/webmaster/controlling-robot/robots-txt.xml#host
+		return returnStringVal(lHost)
 
 	case "sitemap":
 		// Non-group field, applies to the host as a whole, not to a specific user-agent

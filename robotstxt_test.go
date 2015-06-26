@@ -195,6 +195,39 @@ func TestRobotstxtOrgCase2(t *testing.T) {
 	}
 }
 
+const robots_text_006 = `
+Host: site.ru`
+
+func TestRobotstxtHostCase1(t *testing.T) {
+	if r, err := FromString(robots_text_006); err != nil {
+		t.Fatal(err.Error())
+	} else if r.Host != "site.ru" {
+		t.Fatal("Incorrect host detection")
+	}
+}
+
+const robots_text_007 = `
+#Host: site.ru`
+
+func TestRobotstxtHostCase2(t *testing.T) {
+	if r, err := FromString(robots_text_007); err != nil {
+		t.Fatal(err.Error())
+	} else if r.Host != "" {
+		t.Fatal("Incorrect host detection")
+	}
+}
+
+const robots_text_008 = `
+Host: яндекс.рф`
+
+func TestRobotstxtHostCase3(t *testing.T) {
+	if r, err := FromString(robots_text_008); err != nil {
+		t.Fatal(err.Error())
+	} else if r.Host != "яндекс.рф" {
+		t.Fatal("Incorrect host detection")
+	}
+}
+
 const robots_text_errs = `Disallow: /
 User-agent: Google
 Crawl-delay: fail`

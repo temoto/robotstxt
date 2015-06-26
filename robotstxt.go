@@ -22,6 +22,7 @@ type RobotsData struct {
 	groups      []*Group
 	allowAll    bool
 	disallowAll bool
+	Host        string
 	Sitemaps    []string
 }
 
@@ -124,7 +125,7 @@ func FromBytes(body []byte) (r *RobotsData, err error) {
 
 	r = &RobotsData{}
 	parser := newParser(tokens)
-	r.groups, r.Sitemaps, errs = parser.parseAll()
+	r.groups, r.Host, r.Sitemaps, errs = parser.parseAll()
 	if len(errs) > 0 {
 		return nil, newParseError(errs)
 	}
