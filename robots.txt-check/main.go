@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"github.com/temoto/robotstxt.go"
+	"github.com/temoto/robotstxt"
 	"log"
 	"net/http"
 	"strings"
