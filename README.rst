@@ -15,7 +15,7 @@ Usage
 
 As usual, no special installation is required, just
 
-    import "github.com/temoto/robotstxt.go"
+    import "github.com/temoto/robotstxt"
 
 run `go get` and you're ready.
 
