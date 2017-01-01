@@ -118,7 +118,8 @@ func (s *byteScanner) Scan() (string, error) {
 		tok.WriteRune(s.ch)
 		s.nextChar()
 	}
-	return tok.String(), nil
+	toks := tok.String()
+	return toks, nil
 }
 
 func (s *byteScanner) ScanAll() ([]string, error) {
