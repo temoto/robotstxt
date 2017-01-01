@@ -1,8 +1,28 @@
 language: go
+sudo: false
 
 go:
-  - 1.0
-  - 1.1
-  - 1.2
+  - 1.7
+  - 1.6
+  - 1.5
+  - 1.4
   - 1.3
-  - tip
+  - 1.2
+  - 1.1
+
+matrix:
+  include:
+  - go: 1.0
+    env: task=test-no-race
+  - go: 1.7
+    env: task=bench
+  - go: master
+    env: task=bench
+  - go: master
+    env: task=clean
+
+script:
+  - if [[ "$task" == "" ]]; then exec go test -race -v ./... ; fi
+  - if [[ "$task" == "test-no-race" ]]; then exec go test -v ./... ; fi
+  - if [[ "$task" == "bench" ]]; then exec ./script/bench ; fi
+  - if [[ "$task" == "clean" ]]; then exec ./script/clean ; fi

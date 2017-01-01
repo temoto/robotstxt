@@ -114,10 +114,10 @@ func TestGrouping(t *testing.T) {
 			t.Fatalf("Expected 2 agents in group 3, got %d", len(r.groups[2].agents))
 		}
 		if r.groups[2].agents[0] != "e" {
-			t.Fatalf("Expected first agent in group 3 to be e, got %s", len(r.groups[2].agents[0]))
+			t.Fatalf("Expected first agent in group 3 to be e, got %d", len(r.groups[2].agents[0]))
 		}
 		if r.groups[2].agents[1] != "f" {
-			t.Fatalf("Expected second agent in group 3 to be f, got %s", len(r.groups[2].agents[1]))
+			t.Fatalf("Expected second agent in group 3 to be f, got %d", len(r.groups[2].agents[1]))
 		}
 	}
 }
@@ -149,7 +149,7 @@ func TestCrawlDelays(t *testing.T) {
 			t.Fatalf("Expected 3 groups, got %d", len(r.groups))
 		}
 		if r.groups[1].CrawlDelay != time.Duration(3.5*float64(time.Second)) {
-			t.Fatalf("Expected crawl delay of 3.5 for group 2, got %f", r.groups[1].CrawlDelay)
+			t.Fatalf("Expected crawl delay of 3.5 for group 2, got %v", r.groups[1].CrawlDelay)
 		}
 		if r.groups[2].CrawlDelay != (5 * time.Second) {
 			t.Fatalf("Expected crawl delay of 5 for group 3, got %v", r.groups[2].CrawlDelay)
@@ -161,6 +161,9 @@ func TestWildcards(t *testing.T) {
 	if r, e := FromString(robots_case_wildcards); e != nil {
 		t.Fatal(e)
 	} else {
+		if len(r.groups) == 0 {
+			t.Fatalf("Expected 3 groups, got %d", len(r.groups))
+		}
 		if s := r.groups[0].rules[0].pattern.String(); s != "/path.*l$" {
 			t.Fatalf("Expected pattern to be /path.*l$, got %s", s)
 		}

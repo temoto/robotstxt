@@ -1,0 +1,16 @@
+#!/bin/bash
+set -e
+err=0
+
+echo "script/clean: go fmt"
+go fmt ./...
+git diff --exit-code || err=1
+
+echo "script/clean: go fix"
+go fix ./...
+git diff --exit-code || err=1
+
+echo "script/clean: go vet"
+go vet ./... || err=1
+
+exit $err
