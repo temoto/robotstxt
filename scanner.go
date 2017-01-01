@@ -1,6 +1,7 @@
 package robotstxt
 
 import (
+	"bytes"
 	"fmt"
 	"go/token"
 	"io"
@@ -100,7 +101,8 @@ func (s *byteScanner) Scan() (string, error) {
 	   }
 	*/
 
-	tok := string(s.ch)
+	var tok bytes.Buffer
+	tok.WriteRune(s.ch)
 	s.nextChar()
 	for s.ch != -1 && !s.isSpace() && !s.isEol() {
 		// Do not consider ":" to be a token separator if a first key token
@@ -113,10 +115,10 @@ func (s *byteScanner) Scan() (string, error) {
 			break
 		}
 
-		tok += string(s.ch)
+		tok.WriteRune(s.ch)
 		s.nextChar()
 	}
-	return tok, nil
+	return tok.String(), nil
 }
 
 func (s *byteScanner) ScanAll() ([]string, error) {
