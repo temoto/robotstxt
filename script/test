@@ -1,0 +1,14 @@
+#!/bin/bash
+set -e
+
+tmp=/tmp/coverage-one.txt
+flags=(
+  -covermode=atomic "-coverprofile=$tmp"
+  -race
+)
+
+rm -f coverage.txt
+for d in $(go list ./... |fgrep -v vendor) ; do
+  go test ${flags[@]} $d
+  [[ -r "$tmp" ]] && cat $tmp >>coverage.txt
+done

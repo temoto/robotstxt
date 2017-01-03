@@ -87,3 +87,13 @@ Honorable contributors (in undefined order):
     * Micha Gorelick (mynameisfiber)
 
 Initial commit and other: Sergey Shepelev temotor@gmail.com
+
+
+Flair
+=====
+
+.. image:: https://travis-ci.org/temoto/robotstxt.svg?branch=master
+    :target: https://travis-ci.org/temoto/robotstxt
+
+.. image:: https://codecov.io/gh/temoto/robotstxt/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/temoto/robotstxt
