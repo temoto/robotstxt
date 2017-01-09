@@ -7,7 +7,20 @@ This is a robots.txt exclusion protocol implementation for Go language (golang).
 Build
 =====
 
-To build and run tests run `go test` in source directory.
+To build and run tests run `script/test` in source directory.
+
+
+Contribute
+==========
+
+Warm welcome.
+
+* If desired, add your name in README.rst, section Who.
+* Run `script/test && script/clean && echo ok`
+* You can ignore linter warnings, but everything else must pass.
+* Send your change as pull request or just a regular patch to current maintainer (see section Who).
+
+Thank you.
 
 
 Usage

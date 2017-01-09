@@ -2,15 +2,30 @@
 set -e
 err=0
 
-echo "script/clean: go fmt"
+# developer: commit fixes
+# CI: fail build
+# smarter CI: send patch (pull request)
+
+if ! git diff --exit-code >/dev/null ; then
+  echo "$0: sorry, this script needs clean git tree, try git stash" >&2
+  exit 1
+fi
+
+echo "$0: go fmt"
 go fmt ./...
 git diff --exit-code || err=1
 
-echo "script/clean: go fix"
+echo "$0: go fix"
 go fix ./...
 git diff --exit-code || err=1
 
-echo "script/clean: go vet"
+echo "$0: go vet"
 go vet ./... || err=1
+
+go get -u github.com/alecthomas/gometalinter
+gometalinter --config=metalinter.json --install
+gometalinter --config=metalinter.json --errors --fast
+# show warnings but don't fail build
+gometalinter --config=metalinter.json || true
 
 exit $err

@@ -7,7 +7,6 @@ package robotstxt
 // http://en.wikipedia.org/wiki/Robots.txt
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"regexp"
@@ -85,7 +84,7 @@ func (p *parser) parseAll() (groups []*Group, host string, sitemaps []string, er
 			case lDisallow:
 				// Error if no current group
 				if curGroup == nil {
-					errs = append(errs, errors.New(fmt.Sprintf("Disallow before User-agent at token #%d.", p.pos)))
+					errs = append(errs, fmt.Errorf("Disallow before User-agent at token #%d.", p.pos))
 				} else {
 					isEmptyGroup = false
 					if li.vr != nil {
@@ -98,7 +97,7 @@ func (p *parser) parseAll() (groups []*Group, host string, sitemaps []string, er
 			case lAllow:
 				// Error if no current group
 				if curGroup == nil {
-					errs = append(errs, errors.New(fmt.Sprintf("Allow before User-agent at token #%d.", p.pos)))
+					errs = append(errs, fmt.Errorf("Allow before User-agent at token #%d.", p.pos))
 				} else {
 					isEmptyGroup = false
 					if li.vr != nil {
@@ -116,7 +115,7 @@ func (p *parser) parseAll() (groups []*Group, host string, sitemaps []string, er
 
 			case lCrawlDelay:
 				if curGroup == nil {
-					errs = append(errs, errors.New(fmt.Sprintf("Crawl-delay before User-agent at token #%d.", p.pos)))
+					errs = append(errs, fmt.Errorf("Crawl-delay before User-agent at token #%d.", p.pos))
 				} else {
 					isEmptyGroup = false
 					curGroup.CrawlDelay = time.Duration(li.vf * float64(time.Second))

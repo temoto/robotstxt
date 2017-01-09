@@ -7,14 +7,14 @@ import (
 )
 
 const (
-	robots_case_order = `user-agent: googlebot-news
+	robotsCaseOrder = `user-agent: googlebot-news
 Disallow: /
 user-agent: *
 Disallow: /
 user-agent: googlebot
 Disallow: /`
 
-	robots_case_grouping = `user-agent: a
+	robotsCaseGrouping = `user-agent: a
 disallow: /c
 
 user-agent: b
@@ -24,7 +24,7 @@ user-agent: e
 user-agent: f
 disallow: /g`
 
-	robots_case_sitemaps = `sitemap: http://test.com/a
+	robotsCasesItemaps = `sitemap: http://test.com/a
 user-agent: a
 disallow: /c
 sitemap: http://test.com/b
@@ -35,7 +35,7 @@ sitemap: http://test.com/c
 user-agent: f
 disallow: /g`
 
-	robots_case_delays = `useragent: a
+	robotsCaseDelays = `useragent: a
 # some comment : with colon
 disallow: /c
 user-agent: b
@@ -47,10 +47,10 @@ user-agent: f
 disallow: /g
 crawl-delay: 5`
 
-	robots_case_wildcards = `user-agent: *
+	robotsCaseWildcards = `user-agent: *
 Disallow: /path*l$`
 
-	robots_case_matching = `user-agent: a
+	robotsCaseMatching = `user-agent: a
 Disallow: /
 user-agent: b
 Disallow: /*
@@ -69,7 +69,7 @@ Disallow: /*.php$
 user-agent: i
 Disallow: /fish*.php`
 
-	robots_case_precedence = `user-agent: a
+	robotsCasePrecedence = `user-agent: a
 Disallow: /
 Allow: /p
 user-agent: b
@@ -90,7 +90,7 @@ func TestGroupOrder(t *testing.T) {
 	agents := []string{"Googlebot-News (Googlebot)", "Googlebot", "Googlebot-Image (Googlebot)", "Otherbot (web)", "Otherbot (News)"}
 	groups := []int{1, 3, 3, 2, 2}
 
-	if r, e := FromString(robots_case_order); e != nil {
+	if r, e := FromString(robotsCaseOrder); e != nil {
 		t.Fatal(e)
 	} else {
 		for i, a := range agents {
@@ -104,7 +104,7 @@ func TestGroupOrder(t *testing.T) {
 }
 
 func TestGrouping(t *testing.T) {
-	if r, e := FromString(robots_case_grouping); e != nil {
+	if r, e := FromString(robotsCaseGrouping); e != nil {
 		t.Fatal(e)
 	} else {
 		if len(r.groups) != 3 {
@@ -123,7 +123,7 @@ func TestGrouping(t *testing.T) {
 }
 
 func TestSitemaps(t *testing.T) {
-	if r, e := FromString(robots_case_sitemaps); e != nil {
+	if r, e := FromString(robotsCasesItemaps); e != nil {
 		t.Fatal(e)
 	} else {
 		if len(r.Sitemaps) != 3 {
@@ -139,7 +139,7 @@ func TestSitemaps(t *testing.T) {
 }
 
 func TestCrawlDelays(t *testing.T) {
-	if r, e := FromString(robots_case_delays); e != nil {
+	if r, e := FromString(robotsCaseDelays); e != nil {
 		t.Fatal(e)
 	} else {
 		if len(r.Sitemaps) != 1 {
@@ -158,7 +158,7 @@ func TestCrawlDelays(t *testing.T) {
 }
 
 func TestWildcards(t *testing.T) {
-	if r, e := FromString(robots_case_wildcards); e != nil {
+	if r, e := FromString(robotsCaseWildcards); e != nil {
 		t.Fatal(e)
 	} else {
 		if len(r.groups) == 0 {
@@ -247,7 +247,7 @@ func TestURLMatching(t *testing.T) {
 			"^/Fish.PHP",
 		},
 	}
-	if r, e := FromString(robots_case_matching); e != nil {
+	if r, e := FromString(robotsCaseMatching); e != nil {
 		t.Fatal(e)
 	} else {
 		for k, ar := range cases {
@@ -290,7 +290,7 @@ func TestURLPrecedence(t *testing.T) {
 			"/",
 		},
 	}
-	if r, e := FromString(robots_case_precedence); e != nil {
+	if r, e := FromString(robotsCasePrecedence); e != nil {
 		t.Fatal(e)
 	} else {
 		for k, ar := range cases {

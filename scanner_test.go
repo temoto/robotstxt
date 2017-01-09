@@ -82,7 +82,7 @@ func TestScan007(t *testing.T) {
 
 func TestScanUnicode8BOM(t *testing.T) {
 	sc := newByteScanner("test-bom", false)
-	sc.Feed([]byte(robots_text_vanityfair), true)
+	sc.Feed([]byte(robotsTextVanityfair), true)
 	tokens, err := sc.ScanAll()
 	if err != nil {
 		t.Fatal(err.Error())

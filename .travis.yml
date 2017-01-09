@@ -19,6 +19,8 @@ matrix:
   - go: master
     env: task=clean
 
+install:
+  - go get -u github.com/alecthomas/gometalinter
 script:
   - if [[ "$task" == "" ]]; then set -e ; script/test && bash <(curl -s https://codecov.io/bash) ; fi
   - if [[ "$task" == "bench" ]]; then exec ./script/bench ; fi

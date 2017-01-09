@@ -1,5 +1,5 @@
-// The robots.txt Exclusion Protocol is implemented as specified in
-// http://www.robotstxt.org/wc/robots.html
+// Package robotstxt implements the robots.txt Exclusion Protocol
+// as specified in http://www.robotstxt.org/wc/robots.html
 // with various extensions.
 package robotstxt
 
@@ -81,7 +81,7 @@ func FromStatusAndBytes(statusCode int, body []byte) (*RobotsData, error) {
 		return disallowAll, nil
 	}
 
-	return nil, errors.New("Unexpected status: " + strconv.FormatInt(int64(statusCode), 10))
+	return nil, errors.New("Unexpected status: " + strconv.Itoa(statusCode))
 }
 
 func FromStatusAndString(statusCode int, body string) (*RobotsData, error) {
@@ -152,6 +152,7 @@ func (r *RobotsData) TestAgent(path, agent string) bool {
 	return g.Test(path)
 }
 
+// FindGroup searches block of declarations for specified user-agent.
 // From Google's spec:
 // Only one group of group-member records is valid for a particular crawler.
 // The crawler must determine the correct group of records by finding the group

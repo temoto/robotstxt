@@ -1,14 +1,17 @@
 #!/bin/bash
 set -e
+cd "$( dirname "${BASH_SOURCE[0]}" )/.."
 
-tmp=/tmp/coverage-one.txt
+target=./coverage.txt
+tmp=/tmp/robotstxt-coverage-one.txt
 flags=(
   -covermode=atomic "-coverprofile=$tmp"
   -race
 )
 
-rm -f coverage.txt
+rm -f "$target"
 for d in $(go list ./... |fgrep -v vendor) ; do
   go test ${flags[@]} $d
-  [[ -r "$tmp" ]] && cat $tmp >>coverage.txt
+  [[ -r "$tmp" ]] && cat $tmp >>"$target"
 done
+rm -f "$tmp"
