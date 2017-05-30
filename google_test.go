@@ -84,6 +84,17 @@ Allow: /$
 user-agent: e
 Disallow: /
 Allow: /$`
+
+	robotsGroupDuplicating = `user-agent: *
+	# Added by SEO Ultimate's Link Mask Generator module
+User-agent: *
+Disallow: /go/
+# End Link Mask Generator output
+
+User-agent: *
+Disallow: /wp-admin/
+Disallow: /?s=
+	`
 )
 
 func TestGroupOrder(t *testing.T) {
@@ -314,4 +325,17 @@ func getIndexInSlice(ar []*Group, g *Group) int {
 		}
 	}
 	return -1
+}
+
+func TestRobotsGroupDuplicating(t *testing.T) {
+	if r, e := FromString(robotsGroupDuplicating); e != nil {
+		t.Fatal(e)
+	} else {
+		if r.TestAgent("/go/", "Googlebot") {
+			t.Error("Failed at /go/")
+		}
+		if r.TestAgent("/?s=", "Googlebot") {
+			t.Error("Failed at /?s=")
+		}
+	}
 }

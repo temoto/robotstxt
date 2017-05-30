@@ -52,6 +52,17 @@ func (p *parser) parseAll() (groups []*Group, host string, sitemaps []string, er
 	// Reset internal fields, tokens are assigned at creation time, never change
 	p.pos = 0
 
+	findGroupByUA := func(ua string, groups []*Group) (resGroup *Group) {
+		for _, resGroup = range groups {
+			for _, agent := range resGroup.agents {
+				if agent == ua {
+					return
+				}
+			}
+		}
+		return nil
+	}
+
 	for {
 		if li, err := p.parseLine(); err != nil {
 			if err == io.EOF {
@@ -75,8 +86,11 @@ func (p *parser) parseAll() (groups []*Group, host string, sitemaps []string, er
 					curGroup = nil
 				}
 				if curGroup == nil {
-					curGroup = new(Group)
-					isEmptyGroup = true
+					curGroup = findGroupByUA(li.vs, groups)
+					if curGroup == nil {
+						curGroup = new(Group)
+						isEmptyGroup = true
+					}
 				}
 				// Add the user agent
 				curGroup.agents = append(curGroup.agents, li.vs)
