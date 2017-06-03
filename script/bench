@@ -1,9 +1,10 @@
 #!/bin/bash
-set -e
+set -eu
 
 go get golang.org/x/tools/cmd/benchcmp
 go test -run=NONE -bench=. -count=3 -test.benchmem=true >bench-new
 git fetch origin master
+git stash
 git checkout -f FETCH_HEAD -- .
 go test -run=NONE -bench=. -count=3 -test.benchmem=true >bench-old
 benchcmp -best -mag bench-{old,new}

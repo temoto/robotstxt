@@ -19,36 +19,43 @@ func TestFromStatusAndStringBasic(t *testing.T) {
 	}
 }
 
-func _expectAllow(r *RobotsData, t *testing.T) bool {
-	allow := r.TestAgent("/", "Somebot")
-	return allow
-}
-
-func ExpectAllow(r *RobotsData, t *testing.T, msg string) {
-	if !_expectAllow(r, t) {
-		t.Fatal(msg)
+func ExpectAllow(t *testing.T, r *RobotsData, path, agent string) {
+	if !r.TestAgent(path, agent) {
+		t.Fatalf("Expected allow path '%s' agent '%s'", path, agent)
 	}
 }
 
-func ExpectDisallow(r *RobotsData, t *testing.T, msg string) {
-	if _expectAllow(r, t) {
-		t.Fatal(msg)
+func ExpectDisallow(t *testing.T, r *RobotsData, path, agent string) {
+	if r.TestAgent(path, agent) {
+		t.Fatalf("Expected disallow path '%s' agent '%s'", path, agent)
+	}
+}
+
+func ExpectAllowAll(t *testing.T, r *RobotsData) {
+	if !r.TestAgent("/", "Somebot") {
+		t.Fatal("Expected allow all")
+	}
+}
+
+func ExpectDisallowAll(t *testing.T, r *RobotsData) {
+	if r.TestAgent("/", "Somebot") {
+		t.Fatal("Expected disallow all")
 	}
 }
 
 func TestStatus401(t *testing.T) {
 	r, _ := FromStatusAndString(401, "")
-	ExpectAllow(r, t, "FromStatusAndString(401, \"\") MUST allow everything.")
+	ExpectAllowAll(t, r)
 }
 
 func TestStatus403(t *testing.T) {
 	r, _ := FromStatusAndString(403, "")
-	ExpectAllow(r, t, "FromStatusAndString(403, \"\") MUST allow everything.")
+	ExpectAllowAll(t, r)
 }
 
 func TestStatus404(t *testing.T) {
 	r, _ := FromStatusAndString(404, "")
-	ExpectAllow(r, t, "FromStatusAndString(404, \"\") MUST allow everything.")
+	ExpectAllowAll(t, r)
 }
 
 func TestFromStringBasic(t *testing.T) {
@@ -133,7 +140,7 @@ func TestFromString005(t *testing.T) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	ExpectAllow(r, t, "Must allow.")
+	ExpectAllowAll(t, r)
 }
 
 func TestFromString006(t *testing.T) {
@@ -239,7 +246,7 @@ func TestParseErrors(t *testing.T) {
 		if pe, ok := err.(*ParseError); !ok {
 			t.Fatal("Expected ParseError.")
 		} else if len(pe.Errs) != 2 {
-			t.Fatalf("Expected 2 errors, got %d.", len(pe.Errs))
+			t.Fatalf("Expected 2 errors, got %d:\n%v", len(pe.Errs), pe.Errs)
 		}
 	}
 }
@@ -281,6 +288,37 @@ func TestWildcardPrefix(t *testing.T) {
 	}
 	if r.TestAgent("/foo/oroscopo-di-oggi/bar", "WildcardBot") {
 		t.Fatal("Must not allow /foo/oroscopo-di-oggi/bar")
+	}
+}
+
+func TestGrouping(t *testing.T) {
+	const robotsCaseGrouping = `user-agent: a
+user-agent: b
+disallow: /a
+disallow: /b
+
+user-agent: ignore
+Disallow: /separator
+
+user-agent: b
+user-agent: c
+disallow: /b
+disallow: /c`
+
+	if r, e := FromString(robotsCaseGrouping); e != nil {
+		t.Fatal(e)
+	} else {
+		ExpectDisallow(t, r, "/a", "a")
+		ExpectDisallow(t, r, "/b", "a")
+		ExpectAllow(t, r, "/c", "a")
+
+		ExpectDisallow(t, r, "/a", "b")
+		ExpectDisallow(t, r, "/b", "b")
+		ExpectDisallow(t, r, "/c", "b")
+
+		ExpectAllow(t, r, "/a", "c")
+		ExpectDisallow(t, r, "/b", "c")
+		ExpectDisallow(t, r, "/c", "c")
 	}
 }
 

@@ -19,7 +19,7 @@ import (
 
 type RobotsData struct {
 	// private
-	groups      []*Group
+	groups      map[string]*Group
 	allowAll    bool
 	disallowAll bool
 	Host        string
@@ -27,8 +27,8 @@ type RobotsData struct {
 }
 
 type Group struct {
-	agents     []string
 	rules      []*rule
+	Agent      string
 	CrawlDelay time.Duration
 }
 
@@ -163,17 +163,15 @@ func (r *RobotsData) FindGroup(agent string) (ret *Group) {
 	var prefixLen int
 
 	agent = strings.ToLower(agent)
-	for _, g := range r.groups {
-		for _, a := range g.agents {
-			if a == "*" && prefixLen == 0 {
-				// Weakest match possible
-				prefixLen = 1
+	if ret = r.groups["*"]; ret != nil {
+		// Weakest match possible
+		prefixLen = 1
+	}
+	for a, g := range r.groups {
+		if a != "*" && strings.HasPrefix(agent, a) {
+			if l := len(a); l > prefixLen {
+				prefixLen = l
 				ret = g
-			} else if strings.HasPrefix(agent, a) {
-				if l := len(a); l > prefixLen {
-					prefixLen = l
-					ret = g
-				}
 			}
 		}
 	}

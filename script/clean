@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -eu
 err=0
 
 # developer: commit fixes

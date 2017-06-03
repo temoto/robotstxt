@@ -7,49 +7,6 @@ import (
 )
 
 const (
-	robotsCaseOrder = `user-agent: googlebot-news
-Disallow: /
-user-agent: *
-Disallow: /
-user-agent: googlebot
-Disallow: /`
-
-	robotsCaseGrouping = `user-agent: a
-disallow: /c
-
-user-agent: b
-disallow: /d
-
-user-agent: e
-user-agent: f
-disallow: /g`
-
-	robotsCasesItemaps = `sitemap: http://test.com/a
-user-agent: a
-disallow: /c
-sitemap: http://test.com/b
-user-agent: b
-disallow: /d
-user-agent: e
-sitemap: http://test.com/c
-user-agent: f
-disallow: /g`
-
-	robotsCaseDelays = `useragent: a
-# some comment : with colon
-disallow: /c
-user-agent: b
-crawldelay: 3.5
-disallow: /d
-user-agent: e
-sitemap: http://test.com/c
-user-agent: f
-disallow: /g
-crawl-delay: 5`
-
-	robotsCaseWildcards = `user-agent: *
-Disallow: /path*l$`
-
 	robotsCaseMatching = `user-agent: a
 Disallow: /
 user-agent: b
@@ -87,84 +44,84 @@ Allow: /$`
 )
 
 func TestGroupOrder(t *testing.T) {
+	const robotsCaseOrder = `user-agent: googlebot-news
+Disallow: /
+user-agent: *
+Disallow: /
+user-agent: googlebot
+Disallow: /`
 	agents := []string{"Googlebot-News (Googlebot)", "Googlebot", "Googlebot-Image (Googlebot)", "Otherbot (web)", "Otherbot (News)"}
-	groups := []int{1, 3, 3, 2, 2}
+	paths := []string{"/1", "/3", "/3", "/2", "/2"}
 
 	if r, e := FromString(robotsCaseOrder); e != nil {
 		t.Fatal(e)
 	} else {
 		for i, a := range agents {
-			g := r.FindGroup(a)
-			gi := getIndexInSlice(r.groups, g) + 1
-			if gi != groups[i] {
-				t.Fatalf("Expected agent %s to have group number %d, got %d.", a, groups[i], gi)
-			}
-		}
-	}
-}
-
-func TestGrouping(t *testing.T) {
-	if r, e := FromString(robotsCaseGrouping); e != nil {
-		t.Fatal(e)
-	} else {
-		if len(r.groups) != 3 {
-			t.Fatalf("Expected 3 groups, got %d", len(r.groups))
-		}
-		if len(r.groups[2].agents) != 2 {
-			t.Fatalf("Expected 2 agents in group 3, got %d", len(r.groups[2].agents))
-		}
-		if r.groups[2].agents[0] != "e" {
-			t.Fatalf("Expected first agent in group 3 to be e, got %d", len(r.groups[2].agents[0]))
-		}
-		if r.groups[2].agents[1] != "f" {
-			t.Fatalf("Expected second agent in group 3 to be f, got %d", len(r.groups[2].agents[1]))
+			ExpectDisallow(t, r, paths[i], a)
 		}
 	}
 }
 
 func TestSitemaps(t *testing.T) {
-	if r, e := FromString(robotsCasesItemaps); e != nil {
+	const robotsCaseSitemaps = `sitemap: http://test.com/a
+user-agent: a
+disallow: /c
+sitemap: http://test.com/b
+user-agent: b
+disallow: /d
+user-agent: e
+sitemap: http://test.com/c
+user-agent: f
+disallow: /g`
+
+	if r, e := FromString(robotsCaseSitemaps); e != nil {
 		t.Fatal(e)
 	} else {
 		if len(r.Sitemaps) != 3 {
 			for i, s := range r.Sitemaps {
 				t.Logf("Sitemap %d: %s", i, s)
 			}
-			t.Fatalf("Expected 3 sitemaps, got %d", len(r.Sitemaps))
-		}
-		if len(r.groups) != 3 {
-			t.Fatalf("Expected 3 groups, got %d", len(r.groups))
+			t.Fatalf("Expected 3 sitemaps, got %d:\n%v", len(r.Sitemaps), r.Sitemaps)
 		}
 	}
 }
 
 func TestCrawlDelays(t *testing.T) {
+	const robotsCaseDelays = `useragent: a
+# some comment : with colon
+disallow: /c
+user-agent: b
+crawldelay: 3.5
+disallow: /d
+user-agent: e
+sitemap: http://test.com/c
+user-agent: f
+disallow: /g
+crawl-delay: 5`
+
 	if r, e := FromString(robotsCaseDelays); e != nil {
 		t.Fatal(e)
 	} else {
 		if len(r.Sitemaps) != 1 {
 			t.Fatalf("Expected 1 sitemaps, got %d", len(r.Sitemaps))
 		}
-		if len(r.groups) != 3 {
-			t.Fatalf("Expected 3 groups, got %d", len(r.groups))
+		if g := r.groups["b"]; g.CrawlDelay != time.Duration(3.5*float64(time.Second)) {
+			t.Fatalf("Expected crawl delay of 3.5 for group 2, got %v", g.CrawlDelay)
 		}
-		if r.groups[1].CrawlDelay != time.Duration(3.5*float64(time.Second)) {
-			t.Fatalf("Expected crawl delay of 3.5 for group 2, got %v", r.groups[1].CrawlDelay)
-		}
-		if r.groups[2].CrawlDelay != (5 * time.Second) {
-			t.Fatalf("Expected crawl delay of 5 for group 3, got %v", r.groups[2].CrawlDelay)
+		if g := r.groups["f"]; g.CrawlDelay != (5 * time.Second) {
+			t.Fatalf("Expected crawl delay of 5 for group 3, got %v", g.CrawlDelay)
 		}
 	}
 }
 
 func TestWildcards(t *testing.T) {
+	const robotsCaseWildcards = `user-agent: *
+Disallow: /path*l$`
+
 	if r, e := FromString(robotsCaseWildcards); e != nil {
 		t.Fatal(e)
 	} else {
-		if len(r.groups) == 0 {
-			t.Fatalf("Expected 3 groups, got %d", len(r.groups))
-		}
-		if s := r.groups[0].rules[0].pattern.String(); s != "/path.*l$" {
+		if s := r.groups["*"].rules[0].pattern.String(); s != "/path.*l$" {
 			t.Fatalf("Expected pattern to be /path.*l$, got %s", s)
 		}
 	}
