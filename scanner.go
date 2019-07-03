@@ -6,6 +6,7 @@ import (
 	"go/token"
 	"io"
 	"os"
+	"sync"
 	"unicode/utf8"
 )
 
@@ -19,7 +20,10 @@ type byteScanner struct {
 	lastChunk     bool
 }
 
+const tokEOL = "\n"
+
 var WhitespaceChars = []rune{' ', '\t', '\v'}
+var tokBuffers = sync.Pool{New: func() interface{} { return bytes.NewBuffer(make([]byte, 32)) }}
 
 func newByteScanner(srcname string, quiet bool) *byteScanner {
 	return &byteScanner{
@@ -76,23 +80,24 @@ func (s *byteScanner) Scan() (string, error) {
 			_ = s.nextChar()
 		}
 		// emit newline as separate token
-		return "\n", nil
+		return tokEOL, nil
 	}
 
 	// skip comments
 	if s.ch == '#' {
 		s.keyTokenFound = false
 		s.skipUntilEol()
-		//            s.state = "start"
 		if s.ch == -1 {
 			return "", io.EOF
 		}
 		// emit newline as separate token
-		return "\n", nil
+		return tokEOL, nil
 	}
 
 	// else we found something
-	var tok bytes.Buffer
+	tok := tokBuffers.Get().(*bytes.Buffer)
+	defer tokBuffers.Put(tok)
+	tok.Reset()
 	tok.WriteRune(s.ch)
 	_ = s.nextChar()
 	for s.ch != -1 && !s.isSpace() && !s.isEol() {
@@ -100,7 +105,6 @@ func (s *byteScanner) Scan() (string, error) {
 		// has already been found on this line (avoid cutting an absolute URL
 		// after the "http:")
 		if s.ch == ':' && !s.keyTokenFound {
-			//            s.state = "pre-value"
 			_ = s.nextChar()
 			s.keyTokenFound = true
 			break
@@ -113,7 +117,7 @@ func (s *byteScanner) Scan() (string, error) {
 }
 
 func (s *byteScanner) ScanAll() ([]string, error) {
-	var results []string
+	results := make([]string, 0, 64) // random guess of average tokens length
 	for {
 		t, err := s.Scan()
 		if t != "" {
