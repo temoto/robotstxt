@@ -4,6 +4,9 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -53,12 +56,10 @@ Disallow: /`
 	agents := []string{"Googlebot-News (Googlebot)", "Googlebot", "Googlebot-Image (Googlebot)", "Otherbot (web)", "Otherbot (News)"}
 	paths := []string{"/1", "/3", "/3", "/2", "/2"}
 
-	if r, e := FromString(robotsCaseOrder); e != nil {
-		t.Fatal(e)
-	} else {
-		for i, a := range agents {
-			ExpectDisallow(t, r, paths[i], a)
-		}
+	r, err := FromString(robotsCaseOrder)
+	require.NoError(t, err)
+	for i, a := range agents {
+		expectAccess(t, r, false, paths[i], a)
 	}
 }
 
@@ -74,15 +75,13 @@ sitemap: http://test.com/c
 user-agent: f
 disallow: /g`
 
-	if r, e := FromString(robotsCaseSitemaps); e != nil {
-		t.Fatal(e)
-	} else {
-		if len(r.Sitemaps) != 3 {
-			for i, s := range r.Sitemaps {
-				t.Logf("Sitemap %d: %s", i, s)
-			}
-			t.Fatalf("Expected 3 sitemaps, got %d:\n%v", len(r.Sitemaps), r.Sitemaps)
+	r, err := FromString(robotsCaseSitemaps)
+	require.NoError(t, err)
+	if len(r.Sitemaps) != 3 {
+		for i, s := range r.Sitemaps {
+			t.Logf("Sitemap %d: %s", i, s)
 		}
+		t.Fatalf("Expected 3 sitemaps, got %d:\n%v", len(r.Sitemaps), r.Sitemaps)
 	}
 }
 
@@ -99,18 +98,16 @@ user-agent: f
 disallow: /g
 crawl-delay: 5`
 
-	if r, e := FromString(robotsCaseDelays); e != nil {
-		t.Fatal(e)
-	} else {
-		if len(r.Sitemaps) != 1 {
-			t.Fatalf("Expected 1 sitemaps, got %d", len(r.Sitemaps))
-		}
-		if g := r.groups["b"]; g.CrawlDelay != time.Duration(3.5*float64(time.Second)) {
-			t.Fatalf("Expected crawl delay of 3.5 for group 2, got %v", g.CrawlDelay)
-		}
-		if g := r.groups["f"]; g.CrawlDelay != (5 * time.Second) {
-			t.Fatalf("Expected crawl delay of 5 for group 3, got %v", g.CrawlDelay)
-		}
+	r, err := FromString(robotsCaseDelays)
+	require.NoError(t, err)
+	if len(r.Sitemaps) != 1 {
+		t.Fatalf("Expected 1 sitemaps, got %d", len(r.Sitemaps))
+	}
+	if g := r.groups["b"]; g.CrawlDelay != time.Duration(3.5*float64(time.Second)) {
+		t.Fatalf("Expected crawl delay of 3.5 for group 2, got %v", g.CrawlDelay)
+	}
+	if g := r.groups["f"]; g.CrawlDelay != (5 * time.Second) {
+		t.Fatalf("Expected crawl delay of 5 for group 3, got %v", g.CrawlDelay)
 	}
 }
 
@@ -118,13 +115,9 @@ func TestWildcards(t *testing.T) {
 	const robotsCaseWildcards = `user-agent: *
 Disallow: /path*l$`
 
-	if r, e := FromString(robotsCaseWildcards); e != nil {
-		t.Fatal(e)
-	} else {
-		if s := r.groups["*"].rules[0].pattern.String(); s != "/path.*l$" {
-			t.Fatalf("Expected pattern to be /path.*l$, got %s", s)
-		}
-	}
+	r, err := FromString(robotsCaseWildcards)
+	require.NoError(t, err)
+	assert.Equal(t, "/path.*l$", r.groups["*"].rules[0].pattern.String())
 }
 
 func TestURLMatching(t *testing.T) {
@@ -204,18 +197,16 @@ func TestURLMatching(t *testing.T) {
 			"^/Fish.PHP",
 		},
 	}
-	if r, e := FromString(robotsCaseMatching); e != nil {
-		t.Fatal(e)
-	} else {
-		for k, ar := range cases {
-			for _, p := range ar {
-				ok = strings.HasPrefix(p, "^")
-				if ok {
-					p = p[1:]
-				}
-				if allow := r.TestAgent(p, k); allow != ok {
-					t.Errorf("Agent %s, path %s, expected %v, got %v", k, p, ok, allow)
-				}
+	r, err := FromString(robotsCaseMatching)
+	require.NoError(t, err)
+	for k, ar := range cases {
+		for _, p := range ar {
+			ok = strings.HasPrefix(p, "^")
+			if ok {
+				p = p[1:]
+			}
+			if allow := r.TestAgent(p, k); allow != ok {
+				t.Errorf("Agent %s, path %s, expected %v, got %v", k, p, ok, allow)
 			}
 		}
 	}
@@ -247,18 +238,16 @@ func TestURLPrecedence(t *testing.T) {
 			"/",
 		},
 	}
-	if r, e := FromString(robotsCasePrecedence); e != nil {
-		t.Fatal(e)
-	} else {
-		for k, ar := range cases {
-			for _, p := range ar {
-				ok = !strings.HasPrefix(p, "^")
-				if !ok {
-					p = p[1:]
-				}
-				if allow := r.TestAgent(p, k); allow != ok {
-					t.Errorf("Agent %s, path %s, expected %v, got %v", k, p, ok, allow)
-				}
+	r, err := FromString(robotsCasePrecedence)
+	require.NoError(t, err)
+	for k, ar := range cases {
+		for _, p := range ar {
+			ok = !strings.HasPrefix(p, "^")
+			if !ok {
+				p = p[1:]
+			}
+			if allow := r.TestAgent(p, k); allow != ok {
+				t.Errorf("Agent %s, path %s, expected %v, got %v", k, p, ok, allow)
 			}
 		}
 	}
