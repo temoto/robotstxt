@@ -131,19 +131,19 @@ func TestURLMatching(t *testing.T) {
 	var ok bool
 
 	cases := map[string][]string{
-		"a": []string{
+		"a": {
 			"/",
 			"/test",
 			"",
 			"/path/to/whatever",
 		},
-		"b": []string{
+		"b": {
 			"/",
 			"/test",
 			"",
 			"/path/to/whatever",
 		},
-		"c": []string{
+		"c": {
 			"/fish",
 			"/fish.html",
 			"/fish/salmon.html",
@@ -154,7 +154,7 @@ func TestURLMatching(t *testing.T) {
 			"^/catfish",
 			"^/?id=fish",
 		},
-		"d": []string{
+		"d": {
 			"/fish",
 			"/fish.html",
 			"/fish/salmon.html",
@@ -165,7 +165,7 @@ func TestURLMatching(t *testing.T) {
 			"^/catfish",
 			"^/?id=fish",
 		},
-		"e": []string{
+		"e": {
 			"/fish/",
 			"/fish/?id=anything",
 			"/fish/salmon.htm",
@@ -173,7 +173,7 @@ func TestURLMatching(t *testing.T) {
 			"^/fish.html",
 			"^/Fish/Salmon.asp",
 		},
-		"f": []string{
+		"f": {
 			"/fish/",
 			"/fish/?id=anything",
 			"/fish/salmon.htm",
@@ -181,7 +181,7 @@ func TestURLMatching(t *testing.T) {
 			"^/fish.html",
 			"^/Fish/Salmon.asp",
 		},
-		"g": []string{
+		"g": {
 			"/filename.php",
 			"/folder/filename.php",
 			"/folder/filename.php?parameters",
@@ -190,7 +190,7 @@ func TestURLMatching(t *testing.T) {
 			"^/",
 			"^/windows.PHP",
 		},
-		"h": []string{
+		"h": {
 			"/filename.php",
 			"/folder/filename.php",
 			"^/filename.php?parameters",
@@ -198,7 +198,7 @@ func TestURLMatching(t *testing.T) {
 			"^/filename.php5",
 			"^/windows.PHP",
 		},
-		"i": []string{
+		"i": {
 			"/fish.php",
 			"/fishheads/catfish.php?parameters",
 			"^/Fish.PHP",
@@ -225,24 +225,24 @@ func TestURLPrecedence(t *testing.T) {
 	var ok bool
 
 	cases := map[string][]string{
-		"a": []string{
+		"a": {
 			"/page",
 			"^/test",
 		},
-		"b": []string{
+		"b": {
 			"/folder/page",
 			"^/folder1",
 			"^/folder.htm",
 		},
-		"c": []string{
+		"c": {
 			"^/page.htm",
 			"/page1.asp",
 		},
-		"d": []string{
+		"d": {
 			"/",
 			"^/index",
 		},
-		"e": []string{
+		"e": {
 			"^/page.htm",
 			"/",
 		},
@@ -262,13 +262,4 @@ func TestURLPrecedence(t *testing.T) {
 			}
 		}
 	}
-}
-
-func getIndexInSlice(ar []*Group, g *Group) int {
-	for i, v := range ar {
-		if v == g {
-			return i
-		}
-	}
-	return -1
 }

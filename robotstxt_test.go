@@ -37,12 +37,6 @@ func ExpectAllowAll(t *testing.T, r *RobotsData) {
 	}
 }
 
-func ExpectDisallowAll(t *testing.T, r *RobotsData) {
-	if r.TestAgent("/", "Somebot") {
-		t.Fatal("Expected disallow all")
-	}
-}
-
 func TestStatus401(t *testing.T) {
 	r, _ := FromStatusAndString(401, "")
 	ExpectAllowAll(t, r)
@@ -323,21 +317,33 @@ disallow: /c`
 }
 
 func BenchmarkParseFromString001(b *testing.B) {
+	input := robotsText001
+	b.ReportAllocs()
+	b.SetBytes(int64(len(input)))
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		FromString(robotsText001)
-		b.SetBytes(int64(len(robotsText001)))
+		if _, err := FromString(input); err != nil {
+			b.Fatal(err)
+		}
 	}
 }
 
 func BenchmarkParseFromString002(b *testing.B) {
+	input := robotsText002
+	b.ReportAllocs()
+	b.SetBytes(int64(len(input)))
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		FromString(robotsText002)
-		b.SetBytes(int64(len(robotsText002)))
+		if _, err := FromString(input); err != nil {
+			b.Fatal(err)
+		}
 	}
 }
 
 func BenchmarkParseFromStatus401(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		FromStatusAndString(401, "")
+		if _, err := FromStatusAndString(401, ""); err != nil {
+			b.Fatal(err)
+		}
 	}
 }

@@ -2,10 +2,11 @@ package main
 
 import (
 	"flag"
-	"github.com/temoto/robotstxt"
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/temoto/robotstxt"
 )
 
 var checkPaths = []string{

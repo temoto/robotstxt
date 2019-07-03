@@ -1,7 +1,6 @@
 package robotstxt
 
 import (
-	//    "os"
 	"strconv"
 	"testing"
 )
@@ -15,31 +14,37 @@ func TestScan001(t *testing.T) {
 
 func TestScan002(t *testing.T) {
 	sc := newByteScanner("test-002", false)
-	sc.Feed([]byte("foo"), true)
-	_, err := sc.Scan()
-	//print("---", tok, err)
+	if err := sc.Feed([]byte("foo"), true); err != nil {
+		t.Fatal(err)
+	}
+	tok, err := sc.Scan()
+	t.Logf("Scan tok=%v err=%v", tok, err)
 	if err != nil {
-		t.Fatal(err.Error())
+		t.Fatal(err)
 	}
 }
 
 func TestScan004(t *testing.T) {
 	sc := newByteScanner("test-004", false)
-	sc.Feed([]byte("\u2010"), true)
-	_, err := sc.Scan()
-	//println("---", tok, err)
+	if err := sc.Feed([]byte("\u2010"), true); err != nil {
+		t.Fatal(err)
+	}
+	tok, err := sc.Scan()
+	t.Logf("Scan tok=%v err=%v", tok, err)
 	if err != nil {
-		t.Fatal(err.Error())
+		t.Fatal(err)
 	}
 }
 
 func TestScan005(t *testing.T) {
 	sc := newByteScanner("test-005", true)
-	sc.Feed([]byte("\xd9\xd9"), true)
-	_, err := sc.Scan()
-	//println("---", tok, err)
+	if err := sc.Feed([]byte("\xd9\xd9"), true); err != nil {
+		t.Fatal(err)
+	}
+	tok, err := sc.Scan()
+	t.Logf("Scan tok=%v err=%v", tok, err)
 	if err != nil {
-		t.Fatal(err.Error())
+		t.Fatal(err)
 	}
 	if sc.ErrorCount != 2 {
 		t.Fatal("Expecting ErrorCount be exactly 2.")
@@ -49,12 +54,14 @@ func TestScan005(t *testing.T) {
 func TestScan006(t *testing.T) {
 	sc := newByteScanner("test-006", false)
 	s := "# comment \r\nSomething: Somewhere\r\n"
-	sc.Feed([]byte(s), true)
+	if err := sc.Feed([]byte(s), true); err != nil {
+		t.Fatal(err)
+	}
 	tokens, err := sc.ScanAll()
 	if err != nil {
-		t.Fatal(err.Error())
+		t.Fatal(err)
 	}
-	//println("--- len(tokens):", len(tokens))
+	t.Logf("len(tokens)=%d", len(tokens))
 	if len(tokens) != 4 {
 		t.Fatal("Expecting exactly 4 tokens.")
 	}
@@ -66,12 +73,14 @@ func TestScan006(t *testing.T) {
 func TestScan007(t *testing.T) {
 	sc := newByteScanner("test-007", false)
 	s := "# comment \r\n# more comments\n\nDisallow:\r"
-	sc.Feed([]byte(s), true)
+	if err := sc.Feed([]byte(s), true); err != nil {
+		t.Fatal(err)
+	}
 	tokens, err := sc.ScanAll()
 	if err != nil {
-		t.Fatal(err.Error())
+		t.Fatal(err)
 	}
-	//println("--- len(tokens):", len(tokens))
+	t.Logf("len(tokens)=%d", len(tokens))
 	if len(tokens) != 4 {
 		t.Fatal("Expecting exactly 4 tokens.")
 	}
@@ -82,10 +91,12 @@ func TestScan007(t *testing.T) {
 
 func TestScanUnicode8BOM(t *testing.T) {
 	sc := newByteScanner("test-bom", false)
-	sc.Feed([]byte(robotsTextVanityfair), true)
+	if err := sc.Feed([]byte(robotsTextVanityfair), true); err != nil {
+		t.Fatal(err)
+	}
 	tokens, err := sc.ScanAll()
 	if err != nil {
-		t.Fatal(err.Error())
+		t.Fatal(err)
 	}
 	if len(tokens) == 0 {
 		t.Fatal("Read zero tokens.")

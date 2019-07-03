@@ -10,14 +10,13 @@ import (
 )
 
 type byteScanner struct {
-	ErrorCount int
-	Quiet      bool
-
-	buf           []byte
 	pos           token.Position
-	lastChunk     bool
+	buf           []byte
+	ErrorCount    int
 	ch            rune
+	Quiet         bool
 	keyTokenFound bool
+	lastChunk     bool
 }
 
 var WhitespaceChars = []rune{' ', '\t', '\v'}
@@ -44,7 +43,7 @@ func (s *byteScanner) Feed(input []byte, end bool) error {
 
 	// Skip UTF-8 byte order mark
 	if s.ch == 65279 {
-		s.nextChar()
+		_ = s.nextChar()
 		s.pos.Column = 1
 	}
 
@@ -58,67 +57,57 @@ func (s *byteScanner) GetPosition() token.Position {
 func (s *byteScanner) Scan() (string, error) {
 	//println("--- Scan(). Offset / len(s.buf): ", s.pos.Offset, len(s.buf))
 
-	for {
-		// Note Offset > len, not >=, so we can Scan last character.
-		if s.lastChunk && s.pos.Offset > len(s.buf) {
-			return "", io.EOF
+	// Note Offset > len, not >=, so we can Scan last character.
+	if s.lastChunk && s.pos.Offset > len(s.buf) {
+		return "", io.EOF
+	}
+
+	s.skipSpace()
+
+	if s.ch == -1 {
+		return "", io.EOF
+	}
+
+	// EOL
+	if s.isEol() {
+		s.keyTokenFound = false
+		// skip subsequent newline chars
+		for s.ch != -1 && s.isEol() {
+			_ = s.nextChar()
 		}
+		// emit newline as separate token
+		return "\n", nil
+	}
 
-		s.skipSpace()
-
+	// skip comments
+	if s.ch == '#' {
+		s.keyTokenFound = false
+		s.skipUntilEol()
+		//            s.state = "start"
 		if s.ch == -1 {
 			return "", io.EOF
 		}
-
-		// EOL
-		if s.isEol() {
-			s.keyTokenFound = false
-			// skip subsequent newline chars
-			for s.ch != -1 && s.isEol() {
-				s.nextChar()
-			}
-			// emit newline as separate token
-			return "\n", nil
-		}
-
-		// skip comments
-		if s.ch == '#' {
-			s.keyTokenFound = false
-			s.skipUntilEol()
-			//            s.state = "start"
-			if s.ch == -1 {
-				return "", io.EOF
-			}
-			// emit newline as separate token
-			return "\n", nil
-		}
-
-		// else we found something
-		break
+		// emit newline as separate token
+		return "\n", nil
 	}
 
-	/*
-	   if s.state == "start" {
-	       s.state = "key"
-	   }
-	*/
-
+	// else we found something
 	var tok bytes.Buffer
 	tok.WriteRune(s.ch)
-	s.nextChar()
+	_ = s.nextChar()
 	for s.ch != -1 && !s.isSpace() && !s.isEol() {
 		// Do not consider ":" to be a token separator if a first key token
 		// has already been found on this line (avoid cutting an absolute URL
 		// after the "http:")
 		if s.ch == ':' && !s.keyTokenFound {
 			//            s.state = "pre-value"
-			s.nextChar()
+			_ = s.nextChar()
 			s.keyTokenFound = true
 			break
 		}
 
 		tok.WriteRune(s.ch)
-		s.nextChar()
+		_ = s.nextChar()
 	}
 	return tok.String(), nil
 }
@@ -163,18 +152,18 @@ func (s *byteScanner) isSpace() bool {
 func (s *byteScanner) skipSpace() {
 	//println("--- string(ch): ", s.ch, ".")
 	for s.ch != -1 && s.isSpace() {
-		s.nextChar()
+		_ = s.nextChar()
 	}
 }
 
 func (s *byteScanner) skipUntilEol() {
 	//println("--- string(ch): ", s.ch, ".")
 	for s.ch != -1 && !s.isEol() {
-		s.nextChar()
+		_ = s.nextChar()
 	}
 	// skip subsequent newline chars
 	for s.ch != -1 && s.isEol() {
-		s.nextChar()
+		_ = s.nextChar()
 	}
 }
 

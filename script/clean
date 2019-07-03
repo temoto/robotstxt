@@ -22,10 +22,7 @@ git diff --exit-code || err=1
 echo "$0: go vet"
 go vet ./... || err=1
 
-go get -u github.com/alecthomas/gometalinter
-gometalinter --config=metalinter.json --install
-gometalinter --config=metalinter.json --errors --fast
-# show warnings but don't fail build
-gometalinter --config=metalinter.json || true
+echo "$0: lint"
+golangci-lint run || err=1
 
 exit $err
