@@ -198,7 +198,7 @@ func (p *parser) parseLine() (li *lineInfo, err error) {
 	}
 
 	switch strings.ToLower(t1) {
-	case "\n":
+	case tokEOL:
 		// Don't consume t2 and continue parsing
 		return &lineInfo{t: lIgnore}, nil
 
