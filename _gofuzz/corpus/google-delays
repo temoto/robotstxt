@@ -1,0 +1,11 @@
+useragent: a
+# some comment : with colon
+disallow: /c
+user-agent: b
+crawldelay: 3.5
+disallow: /d
+user-agent: e
+sitemap: http://test.com/c
+user-agent: f
+disallow: /g
+crawl-delay: 5

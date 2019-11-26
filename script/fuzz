@@ -1,0 +1,19 @@
+#!/bin/bash
+set -eu
+
+if ! git diff --exit-code >/dev/null ; then
+  echo "$0: sorry, this script needs clean git tree, try git stash" >&2
+  exit 1
+fi
+
+go get -u github.com/dvyukov/go-fuzz/go-fuzz github.com/dvyukov/go-fuzz/go-fuzz-build
+go-fuzz-build
+git checkout go.mod go.sum
+
+go-fuzz -workdir=_gofuzz
+
+n=$(ls -1 _gofuzz/crashers/ |wc -l)
+if [[ $n -ne 0 ]] ; then
+  echo "$0: found $n crashers" >&2
+  exit 1
+fi

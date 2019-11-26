@@ -1,0 +1,12 @@
+user-agent: a
+user-agent: b
+disallow: /a
+disallow: /b
+
+user-agent: ignore
+Disallow: /separator
+
+user-agent: b
+user-agent: c
+disallow: /b
+disallow: /c

@@ -9,6 +9,7 @@ package robotstxt
 import (
 	"fmt"
 	"io"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -239,6 +240,8 @@ func (p *parser) parseLine() (li *lineInfo, err error) {
 		p.popToken()
 		if cd, e := strconv.ParseFloat(t2, 64); e != nil {
 			return nil, e
+		} else if cd < 0 || math.IsInf(cd, 0) || math.IsNaN(cd) {
+			return nil, fmt.Errorf("Crawl-delay invalid value '%s'", t2)
 		} else {
 			return &lineInfo{t: lCrawlDelay, k: t1, vf: cd}, nil
 		}

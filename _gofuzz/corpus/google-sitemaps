@@ -1,0 +1,10 @@
+sitemap: http://test.com/a
+user-agent: a
+disallow: /c
+sitemap: http://test.com/b
+user-agent: b
+disallow: /d
+user-agent: e
+sitemap: http://test.com/c
+user-agent: f
+disallow: /g

@@ -134,17 +134,26 @@ func TestHost(t *testing.T) {
 }
 
 func TestParseErrors(t *testing.T) {
-	const robotsTextErrs = `Disallow: /
-User-agent: Google
-Crawl-delay: bad-time-value`
-	_, err := FromString(robotsTextErrs)
-	assert.Error(t, err)
-	pe, ok := err.(*ParseError)
-	require.True(t, ok, "Expected ParseError")
-	require.Equal(t, 2, len(pe.Errs))
-	assert.Contains(t, pe.Errs[0].Error(), "Disallow before User-agent")
-	assert.Contains(t, pe.Errs[1].Error(), "bad-time-value")
-	assert.Contains(t, pe.Errs[1].Error(), "invalid syntax")
+	t.Parallel()
+	cases := []struct {
+		name   string
+		input  string
+		expect string
+	}{
+		{"disallow-before", "Disallow: /\nUser-agent: bot", "Disallow before User-agent"},
+		{"crawl-delay-syntax", "User-agent: bot\nCrawl-delay: bad-time-value", "invalid syntax"},
+		{"crawl-delay-inf", "User-agent: bot\nCrawl-delay: -inf", "invalid value"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			t.Log("input:", c.input)
+			_, err := FromString(c.input)
+			require.Error(t, err)
+			_, ok := err.(*ParseError)
+			assert.True(t, ok, "Expected ParseError")
+			require.Contains(t, err.Error(), c.expect)
+		})
+	}
 }
 
 const robotsTextJustHTML = `<!DOCTYPE html>
