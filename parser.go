@@ -185,6 +185,7 @@ func (p *parser) parseLine() (li *lineInfo, err error) {
 				t2 = regexp.QuoteMeta(t2)
 				t2 = strings.Replace(t2, `\*`, `.*`, -1)
 				t2 = strings.Replace(t2, `\$`, `$`, -1)
+				t2 = "^" + t2
 				if r, e := regexp.Compile(t2); e != nil {
 					return nil, e
 				} else {

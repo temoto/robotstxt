@@ -117,7 +117,7 @@ Disallow: /path*l$`
 
 	r, err := FromString(robotsCaseWildcards)
 	require.NoError(t, err)
-	assert.Equal(t, "/path.*l$", r.groups["*"].rules[0].pattern.String())
+	assert.Equal(t, "^/path.*l$", r.groups["*"].rules[0].pattern.String())
 }
 
 func TestURLMatching(t *testing.T) {
@@ -232,10 +232,12 @@ func TestURLPrecedence(t *testing.T) {
 		"d": {
 			"/",
 			"^/index",
+			"^/dir/",
 		},
 		"e": {
 			"^/page.htm",
 			"/",
+			"^/dir/",
 		},
 	}
 	r, err := FromString(robotsCasePrecedence)
