@@ -188,6 +188,11 @@ func (g *Group) Test(path string) bool {
 	return true
 }
 
+// get rules for a given group
+func (g *Group) GetRules() []*rule {
+	return g.rules
+}
+
 // From Google's spec:
 // The path value is used as a basis to determine whether or not a rule applies
 // to a specific URL on a site. With the exception of wildcards, the path is
