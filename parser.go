@@ -29,6 +29,8 @@ const (
 	lHost
 )
 
+var replacer = strings.NewReplacer(`\*`, `.*`, `\$`, `$`)
+
 type parser struct {
 	tokens []string
 	pos    int
@@ -183,8 +185,7 @@ func (p *parser) parseLine() (li *lineInfo, err error) {
 				// Must compile a regexp, this is a pattern.
 				// Escape string before compile.
 				t2 = regexp.QuoteMeta(t2)
-				t2 = strings.Replace(t2, `\*`, `.*`, -1)
-				t2 = strings.Replace(t2, `\$`, `$`, -1)
+				t2 = replacer.Replace(t2)
 				if r, e := regexp.Compile(t2); e != nil {
 					return nil, e
 				} else {
