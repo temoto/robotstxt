@@ -203,12 +203,12 @@ func (p *parser) parseLine() (li *lineInfo, err error) {
 		return &lineInfo{t: lIgnore}, nil
 	}
 
-	switch strings.ToLower(t1) {
-	case tokEOL:
+	switch {
+	case t1 == tokEOL:
 		// Don't consume t2 and continue parsing
 		return &lineInfo{t: lIgnore}, nil
 
-	case "user-agent", "useragent":
+	case strings.EqualFold("user-agent", t1), strings.EqualFold("useragent", t1):
 		// From google's spec:
 		// Handling of <field> elements with simple errors / typos (eg "useragent"
 		// instead of "user-agent") is undefined and may be interpreted as correct
@@ -217,28 +217,28 @@ func (p *parser) parseLine() (li *lineInfo, err error) {
 		t2 = strings.ToLower(t2)
 		return returnStringVal(lUserAgent)
 
-	case "disallow":
+	case strings.EqualFold("disallow", t1):
 		// From google's spec:
 		// When no path is specified, the directive is ignored (so an empty Disallow
 		// CAN be an allow, since allow is the default. The actual result depends
 		// on the other rules in the group).
 		return returnPathVal(lDisallow)
 
-	case "allow":
+	case strings.EqualFold("allow", t1):
 		// From google's spec:
 		// When no path is specified, the directive is ignored.
 		return returnPathVal(lAllow)
 
-	case "host":
+	case strings.EqualFold("host", t1):
 		// Host directive to specify main site mirror
 		// Read more: https://help.yandex.com/webmaster/controlling-robot/robots-txt.xml#host
 		return returnStringVal(lHost)
 
-	case "sitemap":
+	case strings.EqualFold("sitemap", t1):
 		// Non-group field, applies to the host as a whole, not to a specific user-agent
 		return returnStringVal(lSitemap)
 
-	case "crawl-delay", "crawldelay":
+	case strings.EqualFold("crawl-delay", t1), strings.EqualFold("crawldelay", t1):
 		// From http://en.wikipedia.org/wiki/Robots_exclusion_standard#Nonstandard_extensions
 		// Several major crawlers support a Crawl-delay parameter, set to the
 		// number of seconds to wait between successive requests to the same server.
