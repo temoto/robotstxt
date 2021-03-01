@@ -29,10 +29,6 @@ const (
 	lHost
 )
 
-func asterisk(r rune) bool {
-	return r == '*'
-}
-
 type parser struct {
 	tokens []string
 	pos    int
@@ -176,7 +172,7 @@ func (p *parser) parseLine() (li *lineInfo, err error) {
 				t2 = "/" + t2
 			}
 			if strings.HasSuffix(t2, "*") {
-				t2 = strings.TrimRightFunc(t2, asterisk)
+				t2 = strings.TrimRight(t2, "*")
 			}
 			// From google's spec:
 			// Google, Bing, Yahoo, and Ask support a limited form of
