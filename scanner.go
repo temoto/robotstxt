@@ -22,6 +22,7 @@ type byteScanner struct {
 const tokEOL = "\n"
 
 var WhitespaceChars = []rune{' ', '\t', '\v'}
+var tokBuffers = sync.Pool{New: func() interface{} { return bytes.NewBuffer(make([]byte, 32)) }}
 
 func newByteScanner(srcname string, quiet bool) *byteScanner {
 	return &byteScanner{
@@ -89,7 +90,9 @@ func (s *byteScanner) scan() string {
 	}
 
 	// else we found something
-	var tok strings.Builder
+	tok := tokBuffers.Get().(*bytes.Buffer)
+	defer tokBuffers.Put(tok)
+	tok.Reset()
 	tok.WriteRune(s.ch)
 	s.nextChar()
 	for s.ch != -1 && !s.isSpace() && !s.isEol() {
