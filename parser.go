@@ -171,9 +171,7 @@ func (p *parser) parseLine() (li *lineInfo, err error) {
 			if !strings.HasPrefix(t2, "*") && !strings.HasPrefix(t2, "/") {
 				t2 = "/" + t2
 			}
-			if strings.HasSuffix(t2, "*") {
-				t2 = strings.TrimRight(t2, "*")
-			}
+			t2 = strings.TrimRightFunc(t2, isAsterisk)
 			// From google's spec:
 			// Google, Bing, Yahoo, and Ask support a limited form of
 			// "wildcards" for path values. These are:
@@ -266,4 +264,8 @@ func (p *parser) peekToken() (tok string, ok bool) {
 		return "", false
 	}
 	return p.tokens[p.pos], true
+}
+
+func isAsterisk(r rune) bool {
+	return r == '*'
 }
