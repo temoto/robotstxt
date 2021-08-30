@@ -8,6 +8,7 @@ package robotstxt
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -110,7 +111,7 @@ func FromBytes(body []byte) (r *RobotsData, err error) {
 	}
 
 	sc := newByteScanner("bytes", true)
-	//sc.Quiet = !print_errors
+	// sc.Quiet = !print_errors
 	sc.feed(body, true)
 	tokens := sc.scanAll()
 
@@ -225,3 +226,78 @@ func (g *Group) findRule(path string) (ret *rule) {
 	}
 	return
 }
+
+func(g *Group) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]interface{}{
+		"agent":g.Agent,
+		"crawl_delay":g.CrawlDelay.Nanoseconds(),
+		"rules":g.rules,
+	})
+}
+
+func(g *Group) UnmarshalJSON(bytes []byte) error {
+	var ruleInterface map[string]interface{}
+	err := json.Unmarshal(bytes, &ruleInterface)
+
+	if err != nil {
+		return err
+	}
+
+	if agent, ok := ruleInterface["agent"].(string); ok {
+		g.Agent = agent
+	}
+
+	if crawlDelay, ok := ruleInterface["crawl_delay"].(float64); ok {
+		g.CrawlDelay = time.Duration(int64(crawlDelay))
+	}
+
+	if rulesAr, ok := ruleInterface["rules"].([]interface{}); ok && len(rulesAr) > 0 {
+
+		g.rules = make([]*rule, 0)
+
+		for _, ruleInterface := range rulesAr {
+			r, ok := ruleInterface.(map[string]interface{})
+
+			if !ok {
+				continue
+			}
+
+			restoredRule := &rule{}
+
+			if allow, ok := r["allow"].(bool); ok {
+				restoredRule.allow = allow
+			}
+
+			if path, ok := r["path"].(string); ok {
+				restoredRule.path = path
+			}
+
+			if pattern, ok := r["pattern"].(string); ok && len(pattern) > 0 {
+				restoredRule.pattern, err = regexp.Compile(pattern)
+
+				if err != nil {
+					return err
+				}
+			}
+
+			g.rules = append(g.rules, restoredRule)
+		}
+	}
+
+	return nil
+}
+
+func(r *rule) MarshalJSON() ([]byte, error) {
+	var pattern string
+
+	if r.pattern != nil {
+		pattern = r.pattern.String()
+	}
+
+	return json.Marshal(map[string]interface{}{
+		"allow":r.allow,
+		"path":r.path,
+		"pattern":pattern,
+	})
+}
+
