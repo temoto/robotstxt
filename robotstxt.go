@@ -10,12 +10,17 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+)
+
+const (
+	AnyGroupId = "*"
 )
 
 type RobotsData struct {
@@ -149,6 +154,11 @@ func (r *RobotsData) TestAgent(path, agent string) bool {
 	return g.Test(path)
 }
 
+// Returns true if all urls disallowed
+func (r *RobotsData) TestDisallowAll() bool {
+	return !r.disallowAll
+}
+
 // FindGroup searches block of declarations for specified user-agent.
 // From Google's spec:
 // Only one group of group-member records is valid for a particular crawler.
@@ -157,26 +167,150 @@ func (r *RobotsData) TestAgent(path, agent string) bool {
 // records are ignored by the crawler. The user-agent is non-case-sensitive.
 // The order of the groups within the robots.txt file is irrelevant.
 func (r *RobotsData) FindGroup(agent string) (ret *Group) {
+	_, g := r.FindGroupWithGroupId(agent)
+	return g
+}
+
+func (r *RobotsData) FindGroupWithGroupId(agent string) (groupId string, ret *Group) {
 	var prefixLen int
 
 	agent = strings.ToLower(agent)
-	if ret = r.groups["*"]; ret != nil {
+	if ret = r.groups[AnyGroupId]; ret != nil {
 		// Weakest match possible
 		prefixLen = 1
 	}
 	for a, g := range r.groups {
-		if a != "*" && strings.HasPrefix(agent, a) {
+		if a != AnyGroupId && strings.HasPrefix(agent, a) {
 			if l := len(a); l > prefixLen {
 				prefixLen = l
 				ret = g
+				groupId = a
 			}
 		}
 	}
 
 	if ret == nil {
-		return emptyGroup
+		return AnyGroupId, emptyGroup
 	}
 	return
+}
+
+func (r *RobotsData) SetGroups(groups map[string]*Group) {
+	r.groups = groups
+}
+
+func(r *RobotsData) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]interface{}{
+		"allow_all":r.allowAll,
+		"disallow_all":r.disallowAll,
+		"groups":r.groups,
+		"host":r.Host,
+		"sitemaps":r.Sitemaps,
+	})
+}
+
+func(r *RobotsData) UnmarshalJSON(bytes []byte) error {
+	var robotsDataInterface map[string]interface{}
+	err := json.Unmarshal(bytes, &robotsDataInterface)
+
+	if err != nil {
+		return err
+	}
+
+	if allowAll, ok := robotsDataInterface["allow_all"].(bool); ok {
+		r.allowAll = allowAll
+	}
+
+	if disallowAll, ok := robotsDataInterface["disallow_all"].(bool); ok {
+		r.disallowAll = disallowAll
+	}
+
+	if groupInterfaces, ok := robotsDataInterface["groups"].(map[string]interface{}); ok {
+
+		r.groups = make(map[string]*Group, len(groupInterfaces))
+
+		for key, groupInterface := range groupInterfaces {
+			g := Group{}
+			err = groupInterfaceToGroup(groupInterface, &g)
+
+			if err != nil {
+				return err
+			}
+
+			r.groups[key] = &g
+		}
+	}
+
+	if host, ok := robotsDataInterface["host"].(string); ok {
+		r.Host = host
+	}
+
+	if sitemaps, ok := robotsDataInterface["sitemaps"].([]string); ok {
+		r.Sitemaps = sitemaps
+	}
+
+	return nil
+}
+
+func groupInterfaceToGroup(groupInterface interface{}, group *Group) error {
+	groupMapInterface, ok := groupInterface.(map[string]interface{})
+
+	if !ok {
+		return fmt.Errorf("Could not parse Group interface")
+	}
+
+	if agent, ok := groupMapInterface["agent"].(string); ok {
+		group.Agent = agent
+	}
+
+	if crawlDelay, ok := groupMapInterface["crawl_delay"].(float64); ok {
+		group.CrawlDelay = time.Duration(int64(crawlDelay))
+	}
+
+	if rulesAr, ok := groupMapInterface["rules"].([]interface{}); ok && len(rulesAr) > 0 {
+
+		group.rules = make([]*rule, 0, len(rulesAr))
+
+		for _, ruleInterface := range rulesAr {
+			restoredRule := rule{}
+			err := ruleInterfaceToRule(ruleInterface, &restoredRule)
+
+			if err != nil {
+				return err
+			}
+
+			group.rules = append(group.rules, &restoredRule)
+		}
+	}
+
+	return nil
+}
+
+func ruleInterfaceToRule(ruleInterface interface{}, restoredRule *rule) error {
+	r, ok := ruleInterface.(map[string]interface{})
+
+	if !ok {
+		return fmt.Errorf("Could not parse Rule Interface")
+	}
+
+	if allow, ok := r["allow"].(bool); ok {
+		restoredRule.allow = allow
+	}
+
+	if path, ok := r["path"].(string); ok {
+		restoredRule.path = path
+	}
+
+	if pattern, ok := r["pattern"].(string); ok && len(pattern) > 0 {
+		var err error
+		restoredRule.pattern, err = regexp.Compile(pattern)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (g *Group) Test(path string) bool {
@@ -233,58 +367,6 @@ func(g *Group) MarshalJSON() ([]byte, error) {
 		"crawl_delay":g.CrawlDelay.Nanoseconds(),
 		"rules":g.rules,
 	})
-}
-
-func(g *Group) UnmarshalJSON(bytes []byte) error {
-	var ruleInterface map[string]interface{}
-	err := json.Unmarshal(bytes, &ruleInterface)
-
-	if err != nil {
-		return err
-	}
-
-	if agent, ok := ruleInterface["agent"].(string); ok {
-		g.Agent = agent
-	}
-
-	if crawlDelay, ok := ruleInterface["crawl_delay"].(float64); ok {
-		g.CrawlDelay = time.Duration(int64(crawlDelay))
-	}
-
-	if rulesAr, ok := ruleInterface["rules"].([]interface{}); ok && len(rulesAr) > 0 {
-
-		g.rules = make([]*rule, 0)
-
-		for _, ruleInterface := range rulesAr {
-			r, ok := ruleInterface.(map[string]interface{})
-
-			if !ok {
-				continue
-			}
-
-			restoredRule := &rule{}
-
-			if allow, ok := r["allow"].(bool); ok {
-				restoredRule.allow = allow
-			}
-
-			if path, ok := r["path"].(string); ok {
-				restoredRule.path = path
-			}
-
-			if pattern, ok := r["pattern"].(string); ok && len(pattern) > 0 {
-				restoredRule.pattern, err = regexp.Compile(pattern)
-
-				if err != nil {
-					return err
-				}
-			}
-
-			g.rules = append(g.rules, restoredRule)
-		}
-	}
-
-	return nil
 }
 
 func(r *rule) MarshalJSON() ([]byte, error) {
