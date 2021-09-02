@@ -154,6 +154,17 @@ func (r *RobotsData) TestAgent(path, agent string) bool {
 	return g.Test(path)
 }
 
+func (r *RobotsData) TestGroup(path string, group *Group) bool {
+	if r.allowAll {
+		return true
+	}
+	if r.disallowAll {
+		return false
+	}
+
+	return group.Test(path)
+}
+
 // Returns true if all urls disallowed
 func (r *RobotsData) TestDisallowAll() bool {
 	return !r.disallowAll
