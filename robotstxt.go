@@ -189,6 +189,7 @@ func (r *RobotsData) FindGroupWithGroupId(agent string) (groupId string, ret *Gr
 	if ret = r.groups[AnyGroupId]; ret != nil {
 		// Weakest match possible
 		prefixLen = 1
+		groupId = AnyGroupId
 	}
 	for a, g := range r.groups {
 		if a != AnyGroupId && strings.HasPrefix(agent, a) {
