@@ -20,7 +20,9 @@ import (
 )
 
 const (
-	AnyGroupId = "*"
+	AnyGroupId                   = "*"
+	regexToRemoveAllPairTagsHTML = `<.*?>.*<.*?>`
+	regexToRemoveAllSingleTagHTML = `<.*?>`
 )
 
 type RobotsData struct {
@@ -106,6 +108,15 @@ func FromResponse(res *http.Response) (*RobotsData, error) {
 	return FromStatusAndBytes(res.StatusCode, buf)
 }
 
+// This method uses a regular expresion to remove HTML.
+// must be of the form <tag> txt <\tag> ie well formed.
+func stripHtmlRegex(s string) string {
+	r1 := regexp.MustCompile(regexToRemoveAllPairTagsHTML)
+	r2 := regexp.MustCompile(regexToRemoveAllSingleTagHTML)
+	result := r1.ReplaceAllString(s, "")
+	return r2.ReplaceAllString(result, "")
+}
+
 func FromBytes(body []byte) (r *RobotsData, err error) {
 	var errs []error
 
@@ -114,6 +125,13 @@ func FromBytes(body []byte) (r *RobotsData, err error) {
 	if len(trimmed) == 0 {
 		return allowAll, nil
 	}
+
+	// toss any html
+	trimedFromHtml := stripHtmlRegex(string(body))
+	if len(trimedFromHtml) == 0 {
+		return allowAll, nil
+	}
+	body = []byte(trimedFromHtml)
 
 	sc := newByteScanner("bytes", true)
 	// sc.Quiet = !print_errors

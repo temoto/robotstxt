@@ -55,6 +55,20 @@ func TestFromStringDisallowWPAdmin(t *testing.T) {
 	expectAllAgents(t, r, false, "/wp-admin/")
 }
 
+func TestWithPairHtmlTags(t *testing.T) {
+	r, err := FromString("<style>#wpadminbar {display:none !important;} html{margin-top:0px !important;} </style>User-agent: *\nDisallow: /wp-admin/\nAllow: /wp-admin/admin-ajax.php\n\nSitemap: https://www.projectengineer.net/sitemap.xml")
+    require.NoError(t, err)
+	expectAllAgents(t, r, false, "/wp-admin/")
+	expectAllAgents(t, r, true, "/wp-admin/admin-ajax.php")
+}
+
+func TestWithSingleHtmlTags(t *testing.T) {
+	r, err := FromString("<!DOCTYPE html>User-agent: *\nDisallow: /wp-admin/\nAllow: /wp-admin/admin-ajax.php\n\nSitemap: https://www.projectengineer.net/sitemap.xml")
+	require.NoError(t, err)
+	expectAllAgents(t, r, false, "/wp-admin/")
+	expectAllAgents(t, r, true, "/wp-admin/admin-ajax.php")
+}
+
 func TestFromString002(t *testing.T) {
 	t.Parallel()
 	r, err := FromString("User-Agent: *\r\nDisallow: /account\r\n")
