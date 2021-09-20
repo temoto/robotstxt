@@ -48,6 +48,13 @@ func TestFromStringDisallowAll(t *testing.T) {
 	expectAll(t, r, false)
 }
 
+func TestFromStringDisallowWPAdmin(t *testing.T) {
+	// missing user-agent implies all user agents.
+	r, err := FromString("Sitemap: http://www.tv-direct.net/sitemap_index.xml\r\nDisallow:  /wp-admin\r\n")
+	require.NoError(t, err)
+	expectAllAgents(t, r, false, "/wp-admin/")
+}
+
 func TestFromString002(t *testing.T) {
 	t.Parallel()
 	r, err := FromString("User-Agent: *\r\nDisallow: /account\r\n")

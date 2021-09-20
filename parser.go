@@ -86,10 +86,7 @@ func (p *parser) parseAll() (groups map[string]*Group, host string, sitemaps []s
 
 			case lDisallow:
 				// Error if no current group
-				if len(agents) == 0 {
-					errs = append(errs, fmt.Errorf("Disallow before User-agent at token #%d.", p.pos))
-				} else {
-					isEmptyGroup = false
+				setRule := func() {
 					var r *rule
 					if li.vr != nil {
 						r = &rule{"", false, li.vr}
@@ -97,6 +94,17 @@ func (p *parser) parseAll() (groups map[string]*Group, host string, sitemaps []s
 						r = &rule{li.vs, false, nil}
 					}
 					parseGroupMap(groups, agents, func(g *Group) { g.rules = append(g.rules, r) })
+				}
+				if len(agents) == 0 {
+					// if no user-agent specified, assume rule applies to ALL user-agents
+					agents = make([]string, 0, 4)
+					agents = append(agents, "*")
+					isEmptyGroup = false
+					setRule()
+					//errs = append(errs, fmt.Errorf("Disallow before User-agent at token #%d.", p.pos))
+				} else {
+					isEmptyGroup = false
+					setRule()
 				}
 
 			case lAllow:
