@@ -21,8 +21,7 @@ import (
 
 const (
 	AnyGroupId                   = "*"
-	regexToRemoveAllPairTagsHTML = `<.*?>.*<.*?>`
-	regexToRemoveAllSingleTagHTML = `<.*?>`
+	regexToRemoveAllPairTagsHTML = `<.*?>.*?</.*?>|<.*?>|<!.*?>`
 )
 
 type RobotsData struct {
@@ -112,9 +111,7 @@ func FromResponse(res *http.Response) (*RobotsData, error) {
 // must be of the form <tag> txt <\tag> ie well formed.
 func stripHtmlRegex(s string) string {
 	r1 := regexp.MustCompile(regexToRemoveAllPairTagsHTML)
-	r2 := regexp.MustCompile(regexToRemoveAllSingleTagHTML)
-	result := r1.ReplaceAllString(s, "")
-	return r2.ReplaceAllString(result, "")
+	return r1.ReplaceAllString(s, "")
 }
 
 func FromBytes(body []byte) (r *RobotsData, err error) {
