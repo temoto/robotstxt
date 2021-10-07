@@ -65,6 +65,16 @@ func (p *parser) parseAll() (groups map[string]*Group, host string, sitemaps []s
 	// Reset internal fields, tokens are assigned at creation time, never change
 	p.pos = 0
 
+	setRule := func(li *lineInfo, groups map[string]*Group, agents []string, allow bool) {
+		var r *rule
+		if li.vr != nil {
+			r = &rule{"", allow, li.vr}
+		} else {
+			r = &rule{li.vs, allow, nil}
+		}
+		parseGroupMap(groups, agents, func(g *Group) { g.rules = append(g.rules, r) })
+	}
+
 	for {
 		if li, err := p.parseLine(); err != nil {
 			if err == io.EOF {
@@ -78,6 +88,8 @@ func (p *parser) parseAll() (groups map[string]*Group, host string, sitemaps []s
 				if !isEmptyGroup {
 					// End previous group
 					agents = make([]string, 0, 4)
+					agents = append(agents, li.vs)
+					setRule(li, groups, agents, false)
 				}
 				if len(agents) == 0 {
 					isEmptyGroup = true
@@ -86,40 +98,29 @@ func (p *parser) parseAll() (groups map[string]*Group, host string, sitemaps []s
 
 			case lDisallow:
 				// Error if no current group
-				setRule := func() {
-					var r *rule
-					if li.vr != nil {
-						r = &rule{"", false, li.vr}
-					} else {
-						r = &rule{li.vs, false, nil}
-					}
-					parseGroupMap(groups, agents, func(g *Group) { g.rules = append(g.rules, r) })
-				}
+
 				if len(agents) == 0 {
 					// if no user-agent specified, assume rule applies to ALL user-agents
-					agents = make([]string, 0, 4)
 					agents = append(agents, "*")
 					isEmptyGroup = false
-					setRule()
+					setRule(li, groups, agents, false)
 					//errs = append(errs, fmt.Errorf("Disallow before User-agent at token #%d.", p.pos))
 				} else {
 					isEmptyGroup = false
-					setRule()
+					setRule(li, groups, agents, false)
 				}
 
 			case lAllow:
 				// Error if no current group
 				if len(agents) == 0 {
-					errs = append(errs, fmt.Errorf("Allow before User-agent at token #%d.", p.pos))
+					// if no user-agent specified, assume rule applies to ALL user-agents
+					agents = append(agents, "*")
+					isEmptyGroup = false
+					setRule(li, groups, agents, true)
+					//errs = append(errs, fmt.Errorf("Allow before User-agent at token #%d.", p.pos))
 				} else {
 					isEmptyGroup = false
-					var r *rule
-					if li.vr != nil {
-						r = &rule{"", true, li.vr}
-					} else {
-						r = &rule{li.vs, true, nil}
-					}
-					parseGroupMap(groups, agents, func(g *Group) { g.rules = append(g.rules, r) })
+					setRule(li, groups, agents, true)
 				}
 
 			case lHost:
