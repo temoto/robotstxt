@@ -96,6 +96,17 @@ func TestFromString004(t *testing.T){
 	expectAllAgents(t, r, false, "/*guestbook*")
 }
 
+func TestFromString005(t *testing.T){
+	t.Parallel()
+	r, err := FromString("Allow: /wp-admin/admin-ajax.php\nUser-Agent: *\nAllow: /wp-content/uploads/\nDisallow: /wp-content/plugins/\nDisallow: /wp-admin/\nDisallow: /readme.html\nDisallow: /refer/\n\nSitemap: https://www.mamatakecare/post-sitemap.xml\nSitemap: https://www.mamatakecare/page-sitemap.xml")
+	require.NoError(t, err)
+	expectAllAgents(t, r, true, "/wp-content/uploads/")
+	expectAllAgents(t, r, false, "/wp-content/plugins/")
+	expectAllAgents(t, r, false, "/wp-admin/")
+	expectAllAgents(t, r, false, "/readme.html")
+	expectAllAgents(t, r, false, "/refer/")
+}
+
 func TestInvalidEncoding(t *testing.T) {
 	// Invalid UTF-8 encoding should not break parser.
 	_, err := FromString("User-agent: H\xef\xbf\xbdm�h�kki\nDisallow: *")
