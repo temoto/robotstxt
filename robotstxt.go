@@ -239,17 +239,17 @@ func (r *RobotsData) SetGroups(groups map[string]*Group) {
 	r.groups = groups
 }
 
-func(r *RobotsData) MarshalJSON() ([]byte, error) {
+func (r *RobotsData) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]interface{}{
-		"allow_all":r.allowAll,
-		"disallow_all":r.disallowAll,
-		"groups":r.groups,
-		"host":r.Host,
-		"sitemaps":r.Sitemaps,
+		"allow_all":    r.allowAll,
+		"disallow_all": r.disallowAll,
+		"groups":       r.groups,
+		"host":         r.Host,
+		"sitemaps":     r.Sitemaps,
 	})
 }
 
-func(r *RobotsData) UnmarshalJSON(bytes []byte) error {
+func (r *RobotsData) UnmarshalJSON(bytes []byte) error {
 	var robotsDataInterface map[string]interface{}
 	err := json.Unmarshal(bytes, &robotsDataInterface)
 
@@ -401,15 +401,15 @@ func (g *Group) findRule(path string) (ret *rule) {
 	return
 }
 
-func(g *Group) MarshalJSON() ([]byte, error) {
+func (g *Group) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]interface{}{
-		"agent":g.Agent,
-		"crawl_delay":g.CrawlDelay.Nanoseconds(),
-		"rules":g.rules,
+		"agent":       g.Agent,
+		"crawl_delay": g.CrawlDelay.Nanoseconds(),
+		"rules":       g.rules,
 	})
 }
 
-func(r *rule) MarshalJSON() ([]byte, error) {
+func (r *rule) MarshalJSON() ([]byte, error) {
 	var pattern string
 
 	if r.pattern != nil {
@@ -417,9 +417,8 @@ func(r *rule) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(map[string]interface{}{
-		"allow":r.allow,
-		"path":r.path,
-		"pattern":pattern,
+		"allow":   r.allow,
+		"path":    r.path,
+		"pattern": pattern,
 	})
 }
-
