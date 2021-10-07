@@ -22,6 +22,7 @@ import (
 const (
 	AnyGroupId                   = "*"
 	regexToRemoveAllPairTagsHTML = `<.*?>.*?</.*?>|<.*?>|<!.*?>`
+	regexToRemoveSpaceBeforeColin = `\s+:`
 )
 
 type RobotsData struct {
@@ -114,6 +115,11 @@ func stripHtmlRegex(s string) string {
 	return r1.ReplaceAllString(s, "")
 }
 
+func stripSpaceBeforeColin(s string) string {
+	r1 := regexp.MustCompile(regexToRemoveSpaceBeforeColin)
+	return r1.ReplaceAllString(s, ":")
+}
+
 func FromBytes(body []byte) (r *RobotsData, err error) {
 	var errs []error
 
@@ -128,7 +134,14 @@ func FromBytes(body []byte) (r *RobotsData, err error) {
 	if len(trimedFromHtml) == 0 {
 		return allowAll, nil
 	}
-	body = []byte(trimedFromHtml)
+
+	// toss " :"
+	trimedFromSpaceColin := stripSpaceBeforeColin(trimedFromHtml)
+	if len(trimedFromSpaceColin) == 0 {
+		return allowAll, nil
+	}
+
+	body = []byte(trimedFromSpaceColin)
 
 	sc := newByteScanner("bytes", true)
 	// sc.Quiet = !print_errors

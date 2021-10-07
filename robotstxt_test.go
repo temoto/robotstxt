@@ -88,6 +88,14 @@ func TestFromString003(t *testing.T) {
 	expectAllAgents(t, r, true, "/paruram")
 }
 
+func TestFromString004(t *testing.T){
+	t.Parallel()
+	r, err := FromString("User-Agent: *\nCrawl-delay : 60\nDisallow : /*calendar*\nDisallow : /*guestbook*")
+	require.NoError(t, err)
+	expectAllAgents(t, r, false, "/*calendar*")
+	expectAllAgents(t, r, false, "/*guestbook*")
+}
+
 func TestInvalidEncoding(t *testing.T) {
 	// Invalid UTF-8 encoding should not break parser.
 	_, err := FromString("User-agent: H\xef\xbf\xbdm�h�kki\nDisallow: *")
