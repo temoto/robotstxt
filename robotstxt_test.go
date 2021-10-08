@@ -161,6 +161,64 @@ Crawl-delay: 100`)
 	expectCrawlDelay(t, r, "bot", 100 * time.Second)
 }
 
+// Test with misspelling of user-agent
+func TestFromString008(t *testing.T){
+	t.Parallel()
+	r, err := FromString(`
+Usser-agent: *
+Allow: /
+
+Sitemap: https://www.prefix.ph/sitemap_index.xml`)
+	require.NoError(t, err)
+	expectAllAgents(t, r, true, "/")
+}
+
+
+
+// Test with misspelling of user-agent
+func TestFromString009(t *testing.T){
+	t.Parallel()
+	r, err := FromString(`
+#
+ser-agent: Applebot
+Allow: /`)
+	require.NoError(t, err)
+	expectAccess(t, r, true, "AppleBot", "/")
+}
+
+// Test with misspelling of user-agent
+func TestFromString010(t *testing.T){
+	t.Parallel()
+	r, err := FromString(`
+#
+###################################################################################################################################
+
+## GENERAL SETTINGS
+
+User-agent: *
+
+
+## SITEMAPS
+
+# SITEMAP INDEX
+Sitemap: https://qgear.es/sitemap_index.xml
+
+# SITEMAP POST
+Sitemap: https://qgear.es/post-sitemap.xml
+
+# SITEMAP PAGINAS
+Sitemap: https://qgear.es/page-sitemap.xml
+
+# SITEMAP AMP
+Sitemap:
+
+# SITEMAP BLOG
+Sitemap:
+`)
+	require.NoError(t, err)
+	expectAllAgents(t, r, true, "/")
+}
+
 func TestInvalidEncoding(t *testing.T) {
 	// Invalid UTF-8 encoding should not break parser.
 	_, err := FromString("User-agent: H\xef\xbf\xbdm�h�kki\nDisallow: *")
@@ -227,6 +285,9 @@ func TestHost(t *testing.T) {
 	}
 }
 
+/*
+// I don't want these to be errors, It's better to allow them with reasonable defaults.
+// Than barf the rest of the file.
 func TestParseErrors(t *testing.T) {
 	t.Parallel()
 	cases := []struct {
@@ -249,6 +310,8 @@ func TestParseErrors(t *testing.T) {
 		})
 	}
 }
+*/
+
 
 const robotsTextJustHTML = `<!DOCTYPE html>
 <html>

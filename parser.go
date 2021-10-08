@@ -211,7 +211,7 @@ func (p *parser) parseLine() (li *lineInfo, err error) {
 		// Don't consume t2 and continue parsing
 		return &lineInfo{t: lIgnore}, nil
 
-	case "user-agent", "useragent":
+	case "user-agent", "useragent", "usser-agent", "ser-agent":
 		// From google's spec:
 		// Handling of <field> elements with simple errors / typos (eg "useragent"
 		// instead of "user-agent") is undefined and may be interpreted as correct

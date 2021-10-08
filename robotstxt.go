@@ -23,6 +23,7 @@ const (
 	AnyGroupId                   = "*"
 	regexToRemoveAllPairTagsHTML = `<.*?>.*?</.*?>|<.*?>|<!.*?>`
 	regexToRemoveSpaceBeforeColin = `\s+:`
+	regexToRemoveAllComments  = `#.*$`
 )
 
 type RobotsData struct {
@@ -120,6 +121,11 @@ func stripSpaceBeforeColin(s string) string {
 	return r1.ReplaceAllString(s, ":")
 }
 
+func stripComments(s string) string {
+	r1 := regexp.MustCompile(regexToRemoveAllComments)
+	return r1.ReplaceAllString(s, "")
+}
+
 func FromBytes(body []byte) (r *RobotsData, err error) {
 	var errs []error
 
@@ -129,13 +135,19 @@ func FromBytes(body []byte) (r *RobotsData, err error) {
 		return allowAll, nil
 	}
 
+	// toss any comments ie anything following a "#"
+	noComments := stripComments(string(trimmed))
+	if len(noComments) == 0 {
+		return allowAll, nil
+	}
+
 	// toss any html
-	trimedFromHtml := stripHtmlRegex(string(body))
+	trimedFromHtml := stripHtmlRegex(noComments)
 	if len(trimedFromHtml) == 0 {
 		return allowAll, nil
 	}
 
-	// toss " :"
+	// replace " :" with ":"
 	trimedFromSpaceColin := stripSpaceBeforeColin(trimedFromHtml)
 	if len(trimedFromSpaceColin) == 0 {
 		return allowAll, nil
