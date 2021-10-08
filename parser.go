@@ -7,7 +7,6 @@ package robotstxt
 // http://en.wikipedia.org/wiki/Robots.txt
 
 import (
-	"fmt"
 	"io"
 	"math"
 	"regexp"
@@ -131,12 +130,14 @@ func (p *parser) parseAll() (groups map[string]*Group, host string, sitemaps []s
 
 			case lCrawlDelay:
 				if len(agents) == 0 {
-					errs = append(errs, fmt.Errorf("Crawl-delay before User-agent at token #%d.", p.pos))
-				} else {
-					isEmptyGroup = false
-					delay := time.Duration(li.vf * float64(time.Second))
-					parseGroupMap(groups, agents, func(g *Group) { g.CrawlDelay = delay })
+					//errs = append(errs, fmt.Errorf("Crawl-delay before User-agent at token #%d.", p.pos))
+					// if no user-agent specified, assume rule applies to ALL user-agents
+					agents = append(agents, "*")
+
 				}
+				isEmptyGroup = false
+				delay := time.Duration(li.vf * float64(time.Second))
+				parseGroupMap(groups, agents, func(g *Group) { g.CrawlDelay = delay })
 			}
 		}
 	}
@@ -245,13 +246,16 @@ func (p *parser) parseLine() (li *lineInfo, err error) {
 		// Several major crawlers support a Crawl-delay parameter, set to the
 		// number of seconds to wait between successive requests to the same server.
 		p.popToken()
-		if cd, e := strconv.ParseFloat(t2, 64); e != nil {
-			return nil, e
+		cd := 0.0
+		var e error
+		if cd, e = strconv.ParseFloat(t2, 64); e != nil {
+			//return nil, e
+			cd = 0.0
 		} else if cd < 0 || math.IsInf(cd, 0) || math.IsNaN(cd) {
-			return nil, fmt.Errorf("Crawl-delay invalid value '%s'", t2)
-		} else {
-			return &lineInfo{t: lCrawlDelay, k: t1, vf: cd}, nil
+			//return nil, fmt.Errorf("Crawl-delay invalid value '%s'", t2)
+			cd = 0.0
 		}
+		return &lineInfo{t: lCrawlDelay, k: t1, vf: cd}, nil
 	}
 
 	// Consume t2 token

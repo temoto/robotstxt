@@ -182,6 +182,11 @@ func (r *RobotsData) TestAgent(path, agent string) bool {
 	return g.Test(path)
 }
 
+func (r *RobotsData) TestCrawlDelay(agent string, crawlDelay time.Duration) bool {
+	g := r.FindGroup(agent)
+	return g.CrawlDelay == crawlDelay
+}
+
 func (r *RobotsData) TestGroup(path string, group *Group) bool {
 	if r.allowAll {
 		return true
