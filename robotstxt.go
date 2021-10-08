@@ -22,6 +22,8 @@ import (
 const (
 	AnyGroupId                   = "*"
 	regexToRemoveAllPairTagsHTML = `<.*?>.*?</.*?>|<.*?>|<!.*?>`
+	regexToRemoveSpaceBeforeColin = `\s+:`
+	regexToRemoveAllComments  = `#.*$`
 )
 
 type RobotsData struct {
@@ -114,6 +116,16 @@ func stripHtmlRegex(s string) string {
 	return r1.ReplaceAllString(s, "")
 }
 
+func stripSpaceBeforeColin(s string) string {
+	r1 := regexp.MustCompile(regexToRemoveSpaceBeforeColin)
+	return r1.ReplaceAllString(s, ":")
+}
+
+func stripComments(s string) string {
+	r1 := regexp.MustCompile(regexToRemoveAllComments)
+	return r1.ReplaceAllString(s, "")
+}
+
 func FromBytes(body []byte) (r *RobotsData, err error) {
 	var errs []error
 
@@ -123,12 +135,25 @@ func FromBytes(body []byte) (r *RobotsData, err error) {
 		return allowAll, nil
 	}
 
+	// toss any comments ie anything following a "#"
+	noComments := stripComments(string(trimmed))
+	if len(noComments) == 0 {
+		return allowAll, nil
+	}
+
 	// toss any html
-	trimedFromHtml := stripHtmlRegex(string(body))
+	trimedFromHtml := stripHtmlRegex(noComments)
 	if len(trimedFromHtml) == 0 {
 		return allowAll, nil
 	}
-	body = []byte(trimedFromHtml)
+
+	// replace " :" with ":"
+	trimedFromSpaceColin := stripSpaceBeforeColin(trimedFromHtml)
+	if len(trimedFromSpaceColin) == 0 {
+		return allowAll, nil
+	}
+
+	body = []byte(trimedFromSpaceColin)
 
 	sc := newByteScanner("bytes", true)
 	// sc.Quiet = !print_errors
@@ -167,6 +192,11 @@ func (r *RobotsData) TestAgent(path, agent string) bool {
 	// The user-agent is non-case-sensitive.
 	g := r.FindGroup(agent)
 	return g.Test(path)
+}
+
+func (r *RobotsData) TestCrawlDelay(agent string, crawlDelay time.Duration) bool {
+	g := r.FindGroup(agent)
+	return g.CrawlDelay == crawlDelay
 }
 
 func (r *RobotsData) TestGroup(path string, group *Group) bool {

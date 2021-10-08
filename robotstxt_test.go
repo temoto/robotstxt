@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 	"testing/quick"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -48,22 +49,37 @@ func TestFromStringDisallowAll(t *testing.T) {
 	expectAll(t, r, false)
 }
 
+// missing user-agent implies all user agents.
 func TestFromStringDisallowWPAdmin(t *testing.T) {
-	// missing user-agent implies all user agents.
-	r, err := FromString("Sitemap: http://www.tv-direct.net/sitemap_index.xml\r\nDisallow:  /wp-admin\r\n")
+	r, err := FromString(`
+Sitemap: http://www.tv-direct.net/sitemap_index.xml
+Disallow:  /wp-admin`)
 	require.NoError(t, err)
 	expectAllAgents(t, r, false, "/wp-admin/")
 }
 
+// Test with HTML embeded in the text
 func TestWithPairHtmlTags(t *testing.T) {
-	r, err := FromString("<style>#wpadminbar {display:none !important;} html{margin-top:0px !important;} < /style>User-agent: *\nDisallow: /wp-admin/\nAllow: /wp-admin/admin-ajax.php\n\nSitemap: https://www.projectengineer.net/sitemap.xml")
+	r, err := FromString(`
+<style>#wpadminbar {display:none !important;} html{margin-top:0px !important;} < /style>User-agent: *
+Disallow: /wp-admin/
+Allow: /wp-admin/admin-ajax.php
+
+Sitemap: https://www.projectengineer.net/sitemap.xml`)
 	require.NoError(t, err)
 	expectAllAgents(t, r, false, "/wp-admin/")
 	expectAllAgents(t, r, true, "/wp-admin/admin-ajax.php")
 }
 
+// Test with !DOCTYPE HTML embeded in the text
 func TestWithSingleHtmlTags(t *testing.T) {
-	r, err := FromString("<!DOCTYPE html>User-agent: *\nDisallow: /wp-admin/\nAllow: /wp-admin/admin-ajax.php\n\nSitemap: https://www.projectengineer.net/sitemap.xml")
+	r, err := FromString(`
+<!DOCTYPE html>
+User-agent: *
+Disallow: /wp-admin/
+Allow: /wp-admin/admin-ajax.php
+
+Sitemap: https://www.projectengineer.net/sitemap.xml`)
 	require.NoError(t, err)
 	expectAllAgents(t, r, false, "/wp-admin/")
 	expectAllAgents(t, r, true, "/wp-admin/admin-ajax.php")
@@ -86,6 +102,121 @@ func TestFromString003(t *testing.T) {
 	require.NoError(t, err)
 	expectAllAgents(t, r, false, "/administrator/")
 	expectAllAgents(t, r, true, "/paruram")
+}
+
+// Test with extra space before ":"
+func TestFromString004(t *testing.T){
+	t.Parallel()
+	r, err := FromString(`
+User-Agent: *
+Crawl-delay : 60
+Disallow : /*calendar*
+Disallow : /*guestbook*`)
+	require.NoError(t, err)
+	expectAllAgents(t, r, false, "/*calendar*")
+	expectAllAgents(t, r, false, "/*guestbook*")
+}
+
+// Test with Allow before a User-Agen
+func TestFromString005(t *testing.T){
+	t.Parallel()
+	r, err := FromString(`
+Allow: /wp-admin/admin-ajax.php
+User-Agent: *
+Allow: /wp-content/uploads/
+Disallow: /wp-content/plugins/
+Disallow: /wp-admin/
+Disallow: /readme.html
+Disallow: /refer/
+
+Sitemap: https://www.mamatakecare/post-sitemap.xml
+Sitemap: https://www.mamatakecare/page-sitemap.xml`)
+	require.NoError(t, err)
+	expectAllAgents(t, r, true, "/wp-content/uploads/")
+	expectAllAgents(t, r, false, "/wp-content/plugins/")
+	expectAllAgents(t, r, false, "/wp-admin/")
+	expectAllAgents(t, r, false, "/readme.html")
+	expectAllAgents(t, r, false, "/refer/")
+}
+
+// Test with a malformed value for Crawl-Delay
+func TestFromString006(t *testing.T) {
+	t.Parallel()
+	r, err := FromString(`
+# Make changes for all web spiders
+User-agent: *
+Crawl-delay: / `)
+	require.NoError(t, err)
+	expectCrawlDelay(t, r, "*", 0 * time.Second)
+}
+
+// Test with a valid Crawl-delay
+func TestFromString007(t *testing.T) {
+	t.Parallel()
+	r, err := FromString(`
+# Make changes for all web spiders
+User-agent: bot
+Crawl-delay: 100`)
+	require.NoError(t, err)
+	expectCrawlDelay(t, r, "bot", 100 * time.Second)
+}
+
+// Test with misspelling of user-agent
+func TestFromString008(t *testing.T){
+	t.Parallel()
+	r, err := FromString(`
+Usser-agent: *
+Allow: /
+
+Sitemap: https://www.prefix.ph/sitemap_index.xml`)
+	require.NoError(t, err)
+	expectAllAgents(t, r, true, "/")
+}
+
+
+
+// Test with misspelling of user-agent
+func TestFromString009(t *testing.T){
+	t.Parallel()
+	r, err := FromString(`
+#
+ser-agent: Applebot
+Allow: /`)
+	require.NoError(t, err)
+	expectAccess(t, r, true, "AppleBot", "/")
+}
+
+// Test with misspelling of user-agent
+func TestFromString010(t *testing.T){
+	t.Parallel()
+	r, err := FromString(`
+#
+###################################################################################################################################
+
+## GENERAL SETTINGS
+
+User-agent: *
+
+
+## SITEMAPS
+
+# SITEMAP INDEX
+Sitemap: https://qgear.es/sitemap_index.xml
+
+# SITEMAP POST
+Sitemap: https://qgear.es/post-sitemap.xml
+
+# SITEMAP PAGINAS
+Sitemap: https://qgear.es/page-sitemap.xml
+
+# SITEMAP AMP
+Sitemap:
+
+# SITEMAP BLOG
+Sitemap:
+`)
+	require.NoError(t, err)
+	expectAllAgents(t, r, true, "/")
 }
 
 func TestInvalidEncoding(t *testing.T) {
@@ -154,6 +285,9 @@ func TestHost(t *testing.T) {
 	}
 }
 
+/*
+// I don't want these to be errors, It's better to allow them with reasonable defaults.
+// Than barf the rest of the file.
 func TestParseErrors(t *testing.T) {
 	t.Parallel()
 	cases := []struct {
@@ -176,6 +310,8 @@ func TestParseErrors(t *testing.T) {
 		})
 	}
 }
+*/
+
 
 const robotsTextJustHTML = `<!DOCTYPE html>
 <html>
@@ -226,7 +362,7 @@ disallow: /c`
 
 	expectAccess(t, r, false, "/a", "b")
 	expectAccess(t, r, false, "/b", "b")
-	expectAccess(t, r, false, "/c", "b")
+	expectAccess(t, r, false, "/c", "c")
 
 	expectAccess(t, r, true, "/a", "c")
 	expectAccess(t, r, false, "/b", "c")
@@ -282,6 +418,10 @@ func expectAllAgents(t *testing.T, r *RobotsData, allow bool, path string) {
 
 func expectAccess(t *testing.T, r *RobotsData, allow bool, path, agent string) bool {
 	return assert.Equal(t, allow, r.TestAgent(path, agent), "path='%s' agent='%s'", path, agent)
+}
+
+func expectCrawlDelay(t *testing.T, r *RobotsData, agent string, delay time.Duration) bool {
+	return assert.Equal(t, true, r.TestCrawlDelay(agent, delay), "agent='%s' delay='%v'", agent, delay)
 }
 
 func newHttpResponse(code int, body string) *http.Response {
