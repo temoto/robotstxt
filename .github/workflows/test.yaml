@@ -64,5 +64,8 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
       - run: go test -race
+        if: ${{ ! matrix.coverage }}
+      - run: go test -race -covermode=atomic -coverprofile=coverage.txt
+        if: matrix.coverage
       - uses: codecov/codecov-action@v2
         if: matrix.coverage
