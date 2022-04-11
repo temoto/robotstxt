@@ -171,6 +171,24 @@ func TestHtmlInstead(t *testing.T) {
 	assert.True(t, group.Test("/"))
 }
 
+func TestFindGroupAgent(t *testing.T) {
+	const robotsTextSimple = `user-agent: wall-e
+disallow: /
+user-agent: *
+allow: /`
+
+	r, err := FromString(robotsTextSimple)
+	require.NoError(t, err)
+
+	group := r.FindGroup("eve")
+	require.NotNil(t, group)
+	assert.Equal(t, "*", group.Agent)
+
+	group = r.FindGroup("wall-e")
+	require.NotNil(t, group)
+	assert.Equal(t, "wall-e", group.Agent)
+}
+
 // http://perche.vanityfair.it/robots.txt on Sat, 13 Sep 2014 23:00:29 GMT
 const robotsTextVanityfair = "\xef\xbb\xbfUser-agent: *\nDisallow: */oroscopo-di-oggi/*"
 
