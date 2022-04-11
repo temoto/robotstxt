@@ -11,5 +11,6 @@ _gofuzz/crashers/
 _gofuzz/suppressions/
 _obj
 _test
+bench-*.txt
 coverage.txt
 robots.txt-check/robots.txt-check

@@ -1,12 +1,12 @@
 #!/bin/bash
 set -eu
 
-go get golang.org/x/tools/cmd/benchcmp
+go install golang.org/x/perf/cmd/benchstat@v0.0.0-20220411212318-84e58bfe0a7e
 go get
-go test -run=NONE -bench=. -count=3 -test.benchmem=true >bench-new
+go test -run=NONE -bench=. -count=3 -test.benchmem=true >bench-new.txt
 git fetch origin master
 git stash
 git checkout -f FETCH_HEAD -- .
 go get
-go test -run=NONE -bench=. -count=3 -test.benchmem=true >bench-old
-benchcmp -best -mag bench-{old,new}
+go test -run=NONE -bench=. -count=3 -test.benchmem=true >bench-old.txt
+benchstat bench-{old,new}.txt

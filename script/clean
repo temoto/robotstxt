@@ -22,7 +22,11 @@ git diff --exit-code || err=1
 echo "$0: go vet"
 go vet ./... || err=1
 
-echo "$0: lint"
-golangci-lint run || err=1
+if [[ ${lint-1} = 1 ]] ; then
+  echo "$0: lint"
+  golangci-lint run || err=1
+else
+  echo "$0: lint skipped via environment config" >&2
+fi
 
 exit $err
