@@ -57,7 +57,7 @@ func (e ParseError) Error() string {
 }
 
 var AllowAll = &RobotsData{allowAll: true}
-var disallowAll = &RobotsData{disallowAll: true}
+var DisallowAll = &RobotsData{disallowAll: true}
 var emptyGroup = &Group{}
 
 func FromStatusAndBytes(statusCode int, body []byte) (*RobotsData, error) {
@@ -78,7 +78,7 @@ func FromStatusAndBytes(statusCode int, body []byte) (*RobotsData, error) {
 	// Server errors (5xx) are seen as temporary errors that result in a "full
 	// disallow" of crawling.
 	case statusCode >= 500 && statusCode < 600:
-		return disallowAll, nil
+		return DisallowAll, nil
 	}
 
 	return nil, errors.New("Unexpected status: " + strconv.Itoa(statusCode))
