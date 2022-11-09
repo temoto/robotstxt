@@ -56,8 +56,8 @@ func (e ParseError) Error() string {
 	return b.String()
 }
 
-var allowAll = &RobotsData{allowAll: true}
-var disallowAll = &RobotsData{disallowAll: true}
+var AllowAll = &RobotsData{allowAll: true}
+var DisallowAll = &RobotsData{disallowAll: true}
 var emptyGroup = &Group{}
 
 func FromStatusAndBytes(statusCode int, body []byte) (*RobotsData, error) {
@@ -72,13 +72,13 @@ func FromStatusAndBytes(statusCode int, body []byte) (*RobotsData, error) {
 	// This is a "full allow" for crawling. Note: this includes 401
 	// "Unauthorized" and 403 "Forbidden" HTTP result codes.
 	case statusCode >= 400 && statusCode < 500:
-		return allowAll, nil
+		return AllowAll, nil
 
 	// From Google's spec:
 	// Server errors (5xx) are seen as temporary errors that result in a "full
 	// disallow" of crawling.
 	case statusCode >= 500 && statusCode < 600:
-		return disallowAll, nil
+		return DisallowAll, nil
 	}
 
 	return nil, errors.New("Unexpected status: " + strconv.Itoa(statusCode))
@@ -106,7 +106,7 @@ func FromBytes(body []byte) (r *RobotsData, err error) {
 	// special case (probably not worth optimization?)
 	trimmed := bytes.TrimSpace(body)
 	if len(trimmed) == 0 {
-		return allowAll, nil
+		return AllowAll, nil
 	}
 
 	sc := newByteScanner("bytes", true)
@@ -116,7 +116,7 @@ func FromBytes(body []byte) (r *RobotsData, err error) {
 
 	// special case worth optimization
 	if len(tokens) == 0 {
-		return allowAll, nil
+		return AllowAll, nil
 	}
 
 	r = &RobotsData{}
