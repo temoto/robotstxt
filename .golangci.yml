@@ -1,20 +1,40 @@
+version: "2"
 linters:
   enable:
+    - copyloopvar
+    - decorder
+    - errcheck
     - goconst
-    - gofmt
     - gosec
-    - maligned
+    - govet
+    - ineffassign
     - prealloc
     - staticcheck
-  disable:
-    - deadcode
-    - structcheck
-    - varcheck
-
-linters-settings:
-  gofmt:
-    simplify: true
-  govet:
-    check-shadowing: true
-  maligned:
-    suggest-new: true
+    - unused
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+    rules:
+      - linters:
+          - staticcheck
+        text: "error strings should not be capitalized"
+formatters:
+  enable:
+    - gofmt
+  settings:
+    gofmt:
+      simplify: true
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

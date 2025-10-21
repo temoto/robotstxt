@@ -88,7 +88,7 @@ func (p *parser) parseAll() (groups map[string]*Group, host string, sitemaps []s
 			case lDisallow:
 				// Error if no current group
 				if len(agents) == 0 {
-					errs = append(errs, fmt.Errorf("Disallow before User-agent at token #%d.", p.pos))
+					errs = append(errs, fmt.Errorf("Disallow before User-agent at token #%d", p.pos))
 				} else {
 					isEmptyGroup = false
 					var r *rule
@@ -103,7 +103,7 @@ func (p *parser) parseAll() (groups map[string]*Group, host string, sitemaps []s
 			case lAllow:
 				// Error if no current group
 				if len(agents) == 0 {
-					errs = append(errs, fmt.Errorf("Allow before User-agent at token #%d.", p.pos))
+					errs = append(errs, fmt.Errorf("Allow before User-agent at token #%d", p.pos))
 				} else {
 					isEmptyGroup = false
 					var r *rule
@@ -123,7 +123,7 @@ func (p *parser) parseAll() (groups map[string]*Group, host string, sitemaps []s
 
 			case lCrawlDelay:
 				if len(agents) == 0 {
-					errs = append(errs, fmt.Errorf("Crawl-delay before User-agent at token #%d.", p.pos))
+					errs = append(errs, fmt.Errorf("Crawl-delay before User-agent at token #%d", p.pos))
 				} else {
 					isEmptyGroup = false
 					delay := time.Duration(li.vf * float64(time.Second))
@@ -182,8 +182,8 @@ func (p *parser) parseLine() (li *lineInfo, err error) {
 				// Must compile a regexp, this is a pattern.
 				// Escape string before compile.
 				t2 = regexp.QuoteMeta(t2)
-				t2 = strings.Replace(t2, `\*`, `.*`, -1)
-				t2 = strings.Replace(t2, `\$`, `$`, -1)
+				t2 = strings.ReplaceAll(t2, `\*`, `.*`)
+				t2 = strings.ReplaceAll(t2, `\$`, `$`)
 				if r, e := regexp.Compile(t2); e != nil {
 					return nil, e
 				} else {
