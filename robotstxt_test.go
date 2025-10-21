@@ -230,6 +230,16 @@ disallow: /c`
 	expectAccess(t, r, false, "/c", "c")
 }
 
+func TestDifferentApiDisallowAll(t *testing.T) {
+	r, err := FromStatusAndBytes(500, nil)
+	require.NoError(t, err)
+
+	a := r.TestAgent("/", "*")
+	b := r.FindGroup("*").Test("/")
+	assert.Equal(t, false, a, "Expected false (disallow) from TestAgent(/, *)")
+	assert.Equal(t, false, b, "Expected false (disallow) from FindGroup(*).Test(/)")
+}
+
 func BenchmarkParseFromString001(b *testing.B) {
 	input := robotsText001
 	b.ReportAllocs()

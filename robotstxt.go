@@ -18,18 +18,21 @@ import (
 )
 
 type RobotsData struct {
+	Host     string
+	Sitemaps []string
+
 	// private
-	groups      map[string]*Group
 	allowAll    bool
 	disallowAll bool
-	Host        string
-	Sitemaps    []string
+	groups      map[string]*Group
 }
 
 type Group struct {
 	rules      []*rule
 	Agent      string
 	CrawlDelay time.Duration
+
+	disallowAll bool
 }
 
 type rule struct {
@@ -59,6 +62,7 @@ func (e ParseError) Error() string {
 var allowAll = &RobotsData{allowAll: true}
 var disallowAll = &RobotsData{disallowAll: true}
 var emptyGroup = &Group{}
+var emptyDisallowGroup = &Group{disallowAll: true}
 
 func FromStatusAndBytes(statusCode int, body []byte) (*RobotsData, error) {
 	switch {
@@ -173,12 +177,19 @@ func (r *RobotsData) FindGroup(agent string) (ret *Group) {
 	}
 
 	if ret == nil {
-		return emptyGroup
+		if r.disallowAll {
+			return emptyDisallowGroup
+		} else {
+			return emptyGroup
+		}
 	}
 	return
 }
 
 func (g *Group) Test(path string) bool {
+	if g.disallowAll {
+		return false
+	}
 	if r := g.findRule(path); r != nil {
 		return r.allow
 	}
