@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go/token"
 	"os"
+	"slices"
 	"sync"
 	"unicode/utf8"
 )
@@ -22,7 +23,7 @@ type byteScanner struct {
 const tokEOL = "\n"
 
 var WhitespaceChars = []rune{' ', '\t', '\v'}
-var tokBuffers = sync.Pool{New: func() interface{} { return bytes.NewBuffer(make([]byte, 32)) }}
+var tokBuffers = sync.Pool{New: func() any { return bytes.NewBuffer(make([]byte, 32)) }}
 
 func newByteScanner(srcname string, quiet bool) *byteScanner {
 	return &byteScanner{
@@ -136,12 +137,7 @@ func (s *byteScanner) isEol() bool {
 }
 
 func (s *byteScanner) isSpace() bool {
-	for _, r := range WhitespaceChars {
-		if s.ch == r {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(WhitespaceChars, s.ch)
 }
 
 func (s *byteScanner) skipSpace() {
