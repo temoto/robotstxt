@@ -59,6 +59,12 @@ func (e ParseError) Error() string {
 	return b.String()
 }
 
+// Unwrap returns the underlying errors, compatible with errors.Is
+// and errors.As from the standard library (Go 1.20+).
+func (e ParseError) Unwrap() []error {
+	return e.Errs
+}
+
 var allowAll = &RobotsData{allowAll: true}
 var disallowAll = &RobotsData{disallowAll: true}
 var emptyGroup = &Group{}
