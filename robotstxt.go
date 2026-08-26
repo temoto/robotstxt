@@ -28,9 +28,9 @@ type RobotsData struct {
 }
 
 type Group struct {
-	rules      []*rule
-	Agent      string
-	CrawlDelay time.Duration
+	rules         []*rule
+	Agent         string
+	CrawlDelay    time.Duration
 	ContentSignal map[string]string
 
 	disallowAll bool
@@ -216,7 +216,7 @@ func (g *Group) CanSearch() bool {
 	if g.disallowAll {
 		return false
 	}
-	
+
 	searchSignal, exists := g.ContentSignal["search"]
 	if !exists {
 		// From Google's spec:

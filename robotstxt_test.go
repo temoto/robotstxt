@@ -92,7 +92,7 @@ func TestFromCara(t *testing.T) {
 	t.Parallel()
 	r, err := FromString(robotsCara)
 	require.NoError(t, err)
-	
+
 	group := r.FindGroup("Robots-Txt")
 	assert.True(t, group.CanSearch(), "Cara allows robots to use their website as a search index")
 }
@@ -102,11 +102,10 @@ func TestDenySearch(t *testing.T) {
 	r, err := FromString("\nUser-agent: *\nContent-Signal: search=no\nAllow: /\n")
 	require.NoError(t, err)
 	expectAllAgents(t, r, true, "/home")
-	
+
 	group := r.FindGroup("Robots-Txt")
 	assert.True(t, !group.CanSearch(), "The specified robotsTxt file denies using the website in search registries")
 }
-
 
 func TestAllowAll(t *testing.T) {
 	t.Parallel()
