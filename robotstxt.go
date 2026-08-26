@@ -31,6 +31,7 @@ type Group struct {
 	rules      []*rule
 	Agent      string
 	CrawlDelay time.Duration
+	ContentSignal map[string]string
 
 	disallowAll bool
 }
@@ -203,6 +204,27 @@ func (g *Group) Test(path string) bool {
 	// From Google's spec:
 	// By default, there are no restrictions for crawling for the designated crawlers.
 	return true
+}
+
+// From Cloudflare's spec:
+// The search content signal is used to determine wether the crawler is allowed to
+// use the content for providing search results (e.g., returning hyperlinks and short
+// excerpts from your website's contents)
+// If the content signal is not specified, it is assumed that the `robots.txt` does
+// not refer to Cloudflares' specification and is allowed to do so per default.
+func (g *Group) CanSearch() bool {
+	if g.disallowAll {
+		return false
+	}
+	
+	searchSignal, exists := g.ContentSignal["search"]
+	if !exists {
+		// From Google's spec:
+		// By default, there are no restrictions for crawling for the designated crawlers.
+		return true
+	}
+
+	return searchSignal == "yes"
 }
 
 // From Google's spec:

@@ -85,6 +85,29 @@ func TestFromGoogle(t *testing.T) {
 	expectAllAgents(t, r, false, "/search")
 }
 
+// https://cara.app/robots.txt on Wed, 26 Aug 2026 10:20:00 UTC+2
+const robotsCara = ("\nUser-agent: *\nContent-Signal: search=yes,ai-train=no,use=reference\nAllow: /\nUser-agent: Amazonbot\nDisallow: /\nUser-agent: Applebot-Extended\nDisallow: /\nUser-agent: Bytespider\nDisallow: /\nUser-agent: CCBot\nDisallow: /\nUser-agent: ClaudeBot\nDisallow: /\nUser-agent: CloudflareBrowserRenderingCrawler\nDisallow: /\nUser-agent: Google-Extended\nDisallow: /\nUser-agent: GPTBot\nDisallow: /\nUser-agent: meta-externalagent\nDisallow: /\nUser-agent: Googlebot\nDisallow: /*/followers\nDisallow: /*/following\nDisallow: /search\nUser-agent: anthropic-ai\nDisallow: /\nUser-agent: Bytespider\nDisallow: /\nUser-agent: CCBot\nDisallow: /\nUser-agent: GPTBot\nDisallow: /\nUser-agent: ChatGPT-User\nDisallow: /\nUser-agent: Google-Extended\nDisallow: /\nUser-agent: Claude-Web\nDisallow: /\nUser-agent: ClaudeBot\nDisallow: /\nUser-agent: cohere-ai\nDisallow: /\nUser-agent: Diffbot\nDisallow: /\nUser-agent: FacebookBot\nDisallow: /\nUser-agent: ImagesiftBot \nDisallow: /\nUser-agent: Omgili\nDisallow: /\nUser-agent: Omgilibot\nDisallow: /\nUser-agent: *\nDisallow: /search")
+
+func TestFromCara(t *testing.T) {
+	t.Parallel()
+	r, err := FromString(robotsCara)
+	require.NoError(t, err)
+	
+	group := r.FindGroup("Robots-Txt")
+	assert.True(t, group.CanSearch(), "Cara allows robots to use their website as a search index")
+}
+
+func TestDenySearch(t *testing.T) {
+	t.Parallel()
+	r, err := FromString("\nUser-agent: *\nContent-Signal: search=no\nAllow: /\n")
+	require.NoError(t, err)
+	expectAllAgents(t, r, true, "/home")
+	
+	group := r.FindGroup("Robots-Txt")
+	assert.True(t, !group.CanSearch(), "The specified robotsTxt file denies using the website in search registries")
+}
+
+
 func TestAllowAll(t *testing.T) {
 	t.Parallel()
 	cases := []string{

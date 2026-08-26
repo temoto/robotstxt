@@ -27,6 +27,7 @@ const (
 	lCrawlDelay
 	lSitemap
 	lHost
+	lContentSignal
 )
 
 type parser struct {
@@ -35,11 +36,12 @@ type parser struct {
 }
 
 type lineInfo struct {
-	t  lineType       // Type of line key
-	k  string         // String representation of the type of key
-	vs string         // String value of the key
-	vf float64        // Float value of the key
-	vr *regexp.Regexp // Regexp value of the key
+	t  lineType          // Type of line key
+	k  string            // String representation of the type of key
+	vs string            // String value of the key
+	vf float64           // Float value of the key
+	vm map[string]string // Map value of the key, consisting of key-value pairs
+	vr *regexp.Regexp    // Regexp value of the key
 }
 
 func newParser(tokens []string) *parser {
@@ -129,6 +131,13 @@ func (p *parser) parseAll() (groups map[string]*Group, host string, sitemaps []s
 					delay := time.Duration(li.vf * float64(time.Second))
 					parseGroupMap(groups, agents, func(g *Group) { g.CrawlDelay = delay })
 				}
+			case lContentSignal:
+				if len(agents) == 0 {
+					errs = append(errs, fmt.Errorf("Content-Signal before User-agent at token #%d", p.pos))
+				} else {
+					isEmptyGroup = false
+					parseGroupMap(groups, agents, func(g *Group) { g.ContentSignal = li.vm })
+				}
 			}
 		}
 	}
@@ -197,6 +206,26 @@ func (p *parser) parseLine() (li *lineInfo, err error) {
 		return &lineInfo{t: lIgnore}, nil
 	}
 
+	// Helper closure for key-value listings (content-signals), common behaviour:
+	// - Consume t2 token
+	// - If empty, return unknown line info
+	// - Otherwise, split t2 by commas.
+	returnCommaSeparated := func(t lineType) (*lineInfo, error) {
+		p.popToken()
+		if t2 != "" {
+			rawEntries := strings.Split(t2, ",")
+			entries := make(map[string]string, 4)
+			for _, entry := range rawEntries {
+				key, value, found := strings.Cut(strings.TrimSpace(entry), "=")
+				if found {
+					entries[key] = value
+				}
+			}
+			return &lineInfo{t: t, k: t1, vs: t2, vm: entries}, nil
+		}
+		return &lineInfo{t: lIgnore}, nil
+	}
+
 	switch strings.ToLower(t1) {
 	case tokEOL:
 		// Don't consume t2 and continue parsing
@@ -244,6 +273,15 @@ func (p *parser) parseLine() (li *lineInfo, err error) {
 		} else {
 			return &lineInfo{t: lCrawlDelay, k: t1, vf: cd}, nil
 		}
+
+	case "content-signal":
+		// From https://contentsignals.org/
+		// Modern crawlers support a Content-Signal parameter, which specifies data collection
+		// policies under the following categories:
+		// 1. search:   building a search index and providing search
+		// 2. ai-input: inputting content into one or more AI models
+		// 3. ai-train: training or fine-tuning AI models.
+		return returnCommaSeparated(lContentSignal)
 	}
 
 	// Consume t2 token
