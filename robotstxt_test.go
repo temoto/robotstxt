@@ -201,6 +201,24 @@ func TestWildcardPrefix(t *testing.T) {
 	expectAllAgents(t, r, false, "/foo/oroscopo-di-oggi/bar")
 }
 
+func TestPatternMatchesFromStart(t *testing.T) {
+	t.Parallel()
+	r, err := FromString("User-agent: *\nDisallow: /$\nDisallow: /a*b\n")
+	require.NoError(t, err)
+	expectAccess(t, r, false, "/", "foo")
+	expectAccess(t, r, true, "/fish/", "foo")
+	expectAccess(t, r, false, "/axb", "foo")
+	expectAccess(t, r, true, "/x/axb", "foo")
+}
+
+func TestDisallowAsterisk(t *testing.T) {
+	t.Parallel()
+	r, err := FromString("User-agent: *\nDisallow: *\n")
+	require.NoError(t, err)
+	expectAccess(t, r, false, "/", "foo")
+	expectAccess(t, r, false, "/fish", "foo")
+}
+
 func TestGrouping(t *testing.T) {
 	const robotsCaseGrouping = `user-agent: a
 user-agent: b
