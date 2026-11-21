@@ -173,6 +173,10 @@ func (p *parser) parseLine() (li *lineInfo, err error) {
 				t2 = "/" + t2
 			}
 			t2 = strings.TrimRightFunc(t2, isAsterisk)
+			if t2 == "" {
+				// "*" alone matches every path, like "/"
+				t2 = "/"
+			}
 			// From google's spec:
 			// Google, Bing, Yahoo, and Ask support a limited form of
 			// "wildcards" for path values. These are:

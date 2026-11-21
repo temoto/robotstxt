@@ -220,7 +220,9 @@ func (g *Group) findRule(path string) (ret *rule) {
 
 	for _, r := range g.rules {
 		if r.pattern != nil {
-			if r.pattern.MatchString(path) {
+			// A rule matches from the start of the path. The leftmost match
+			// starts at 0 whenever one does.
+			if loc := r.pattern.FindStringIndex(path); loc != nil && loc[0] == 0 {
 				// Consider this a match equal to the length of the pattern.
 				// From Google's spec:
 				// The order of precedence for rules with wildcards is undefined.
